@@ -1,88 +1,118 @@
-class GameState:
-    """Datos centrales del juego. Reemplaza con tus propios objetos de dominio."""
+import random
 
+CRIATURAS = {
+    "Ignis":   {"tipo": "Fuego",  "hp": 100, "atk": 50},
+    "Torrente":{"tipo": "Agua",   "hp": 110, "atk": 45},
+    "Rocafer": {"tipo": "Tierra", "hp": 130, "atk": 40},
+    "Voltex":  {"tipo": "Rayo",   "hp": 90,  "atk": 60},
+}
+
+MAPA = {
+    "Pradera":  {"norte": "Volcán",  "este": "Lago"},
+    "Volcán":   {"sur": "Pradera"},
+    "Lago":     {"oeste": "Pradera"},
+}
+
+ZONAS = {
+    "Pradera": ["Ignis", "Torrente"],
+    "Volcán":  ["Ignis", "Rocafer"],
+    "Lago":    ["Torrente", "Voltex"],
+}
+
+# ==========================
+# CLASE CRIATURA
+# ==========================
+
+class Criatura:
+    def __init__(self, nombre):
+        data = CRIATURAS[nombre]
+        self.nombre = nombre
+        self.tipo = data["tipo"]
+        self.hp = data["hp"]
+        self.atk = data["atk"]
+
+    def atacar(self, otro):
+        daño = random.randint(int(self.atk * 0.8), int(self.atk * 1.2))
+        otro.hp -= daño
+        print(f"{self.nombre} hace {daño} de daño a {otro.nombre}")
+
+# ─────────────────────────
+# HELPERS CONSOLA
+# ─────────────────────────
+
+def menu(opciones):
+    for i, op in enumerate(opciones, 1):
+        print(f"[{i}] {op}")
+    while True:
+        try:
+            op = int(input("Opción: "))
+            if 1 <= op <= len(opciones):
+                return op
+        except:
+            pass
+
+# ─────────────────────────
+# JUEGO
+# ─────────────────────────
+
+class Juego:
     def __init__(self):
-        self.player_name = ""
-        self.gold = 100
-        self.creatures = []          # Lista de objetos Criatura
-        self.inventory = []          # Lista de objetos Item
-        self.active_creature = None  # Criatura seleccionada para combate
+        self.posicion = "Pradera"
+        self.equipo = [Criatura("Ignis")]
 
-        # Datos de ejemplo — reemplaza con tus clases reales
-        self._load_demo_data()
+    def mover(self):
+        zona = MAPA[self.posicion]
+        opciones = list(zona.keys())
 
-    def _load_demo_data(self):
-        self.creatures = [
-            {
-                "name": "Ignaroth",
-                "type": "Fuego",
-                "level": 12,
-                "hp": 85, "max_hp": 120,
-                "mp": 40, "max_mp": 60,
-                "atk": 32, "def_": 18, "spd": 24,
-                "status": "Quemado",
-                "xp": 680, "xp_next": 1000,
-                "color": "#E67E22",
-                "icon": "🔥",
-                "skills": ["Llamarada", "Colmillo Ígneo", "Rugido"],
-            },
-            {
-                "name": "Frostmaw",
-                "type": "Hielo",
-                "level": 9,
-                "hp": 110, "max_hp": 110,
-                "mp": 55, "max_mp": 80,
-                "atk": 22, "def_": 26, "spd": 16,
-                "status": None,
-                "xp": 320, "xp_next": 800,
-                "color": "#2980B9",
-                "icon": "❄️",
-                "skills": ["Tormenta Gélida", "Barrera de Hielo", "Mordida Fría"],
-            },
-            {
-                "name": "Umbrafel",
-                "type": "Sombra",
-                "level": 15,
-                "hp": 60, "max_hp": 95,
-                "mp": 90, "max_mp": 100,
-                "atk": 40, "def_": 12, "spd": 38,
-                "status": "Maldito",
-                "xp": 1200, "xp_next": 1500,
-                "color": "#9B59B6",
-                "icon": "🌑",
-                "skills": ["Sombra Cortante", "Maldición", "Paso Sombrío"],
-            },
-        ]
-        self.active_creature = self.creatures[0]
+        print(f"\nEstás en {self.posicion}")
+        elec = menu(opciones)
 
-        self.inventory = [
-            {"name": "Poción Mayor", "type": "Consumible", "qty": 3,
-             "desc": "Restaura 80 HP a una criatura.", "price": 150, "icon": "🧪"},
-            {"name": "Éter Oscuro",  "type": "Consumible", "qty": 1,
-             "desc": "Restaura 50 MP. Puede enfermar.", "price": 200, "icon": "💧"},
-            {"name": "Runa de Fuego","type": "Runa",       "qty": 2,
-             "desc": "Aumenta ATK +15 por 3 turnos.",  "price": 300, "icon": "📜"},
-            {"name": "Amuleto Roto", "type": "Accesorio",  "qty": 1,
-             "desc": "Reduce daño recibido un 10%.",   "price": 500, "icon": "💎"},
-            {"name": "Polvo Lunar",  "type": "Material",   "qty": 5,
-             "desc": "Ingrediente para evolución.",     "price": 80,  "icon": "✨"},
-        ]
+        direccion = opciones[elec - 1]
+        self.posicion = zona[direccion]
+        print(f"Te moviste a {self.posicion}")
 
-    SHOP_ITEMS = [
-        {"name": "Poción Mayor",   "type": "Consumible", "price": 150,
-         "desc": "Restaura 80 HP.", "icon": "🧪"},
-        {"name": "Éter Oscuro",    "type": "Consumible", "price": 200,
-         "desc": "Restaura 50 MP.", "icon": "💧"},
-        {"name": "Runa de Fuego",  "type": "Runa",       "price": 300,
-         "desc": "+15 ATK por 3 turnos.", "icon": "📜"},
-        {"name": "Runa de Hielo",  "type": "Runa",       "price": 300,
-         "desc": "+15 DEF por 3 turnos.", "icon": "📜"},
-        {"name": "Polvo Lunar",    "type": "Material",   "price": 80,
-         "desc": "Material de evolución.", "icon": "✨"},
-        {"name": "Amuleto Roto",   "type": "Accesorio",  "price": 500,
-         "desc": "Reduce daño recibido.", "icon": "💎"},
-        {"name": "Tónico de Fuerza","type": "Consumible","price": 250,
-         "desc": "+20 ATK permanente.", "icon": "⚗️"},
-        {"name": "Cristal de Alma", "type": "Material",  "price": 1000,
-         "desc": "Permite cruzar criaturas.", "icon": "🔮"},
-    ]
+    def encuentro(self):
+        if random.random() < 0.6:
+            nombre = random.choice(ZONAS[self.posicion])
+            enemigo = Criatura(nombre)
+
+            print(f"\n¡Apareció {enemigo.nombre}!")
+
+            self.batalla(self.equipo[0], enemigo)
+
+    def batalla(self, jugador, enemigo):
+        while jugador.hp > 0 and enemigo.hp > 0:
+            print(f"\n{jugador.nombre} HP:{jugador.hp}")
+            print(f"{enemigo.nombre} HP:{enemigo.hp}")
+
+            menu(["Atacar"])
+            jugador.atacar(enemigo)
+
+            if enemigo.hp > 0:
+                enemigo.atacar(jugador)
+
+        if jugador.hp > 0:
+            print("¡Ganaste!")
+        else:
+            print("Perdiste...")
+
+# ─────────────────────────
+# MAIN
+# ─────────────────────────
+
+def main():
+    juego = Juego()
+
+    while True:
+        print("\n--- MENÚ ---")
+        op = menu(["Mover", "Explorar", "Salir"])
+
+        if op == 1:
+            juego.mover()
+        elif op == 2:
+            juego.encuentro()
+        else:
+            break
+
+if __name__ == "__main__":
+    main()
