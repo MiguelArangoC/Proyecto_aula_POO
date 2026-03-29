@@ -105,3 +105,9 @@ python game_state.py
 - Paradigma: 100% Orientado a Objetos.
 - Interfaz: Consola interactiva con opciones numeradas — el jugador siempre sabe qué puede hacer.
 - Extensibilidad: Diseñado para agregar nuevos tipos, climas o ítems sin modificar el motor de combate.
+
+
+## Diagrama de clases
+
+<img width="1018" height="770" alt="Diagrama juego POO drawio" src="https://github.com/user-attachments/assets/567e70af-75f3-448e-9c16-dbcaff5372b6" />
+
