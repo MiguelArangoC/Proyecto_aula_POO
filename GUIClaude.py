@@ -1,13 +1,6 @@
 """
-RPG GUI - Dark Fantasy Edition
-================================
-GUI modular construida con Tkinter para un juego RPG.
-Cada pantalla está diseñada para conectarse fácilmente a tu lógica de backend.
-
-CÓMO CONECTAR TU BACKEND:
-- Busca los comentarios "# BACKEND:" en cada método para saber dónde inyectar tu lógica.
-- La clase `GameState` centraliza todos los datos del juego.
-- Las pantallas llaman a métodos del controlador principal `RPGApp`.
+Esto es una prueba de GUI para el proyecto de POO hecha con Claude,
+por favor, no tomar en cuenta, gracias.
 """
 
 import tkinter as tk
