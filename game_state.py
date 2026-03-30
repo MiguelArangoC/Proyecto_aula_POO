@@ -18,7 +18,34 @@ ZONAS = {
     "Volcán":  ["Ignis", "Rocafer"],
     "Lago":    ["Torrente", "Voltex"],
 }
+# ==========================
+# CLASE CONDICION CLIMATICA
+# ==========================
 
+class CondicionClimatica:
+    """Modifica el combate segun el clima activo en la zona."""
+
+    def __init__(self, nombre: str):
+        data = DATOS_CLIMA[nombre]
+        self.nombre = nombre
+        self.beneficia = data["beneficia"]
+        self.perjudica = data["perjudica"]
+        self.dano_turno = data["dano_turno"]  # {"Fuego": 5, ...}
+
+    def modificador_ataque(self, tipo: str) -> float:
+        """Devuelve 1.20 si el tipo es beneficiado, 0.90 si es perjudicado, 1.0 si neutro."""
+        if tipo in self.beneficia:
+            return 1.20
+        if tipo in self.perjudica:
+            return 0.90
+        return 1.0
+
+    def aplicar_dano_turno(self, criatura) -> int:
+        """Aplica dano por turno si el clima lo indica. Retorna el dano aplicado."""
+        dano = self.dano_turno.get(criatura.tipo, 0)
+        criatura.hp -= dano
+        return dano
+    
 # ==========================
 # CLASE CRIATURA
 # ==========================
