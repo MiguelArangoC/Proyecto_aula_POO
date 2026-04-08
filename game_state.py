@@ -123,6 +123,41 @@ class Juego:
         else:
             print("Perdiste...")
 
+
+
+from dataclasses import dataclass
+
+
+@dataclass
+class Item:
+    nombre: str
+    descripcion: str
+    modificador_hp: int   
+    modificador_atk: int 
+
+    def modificar_estadistica(self, criatura):
+        """Aplica las estadísticas directamente, sin importar el tipo de ítem."""
+        print(f"\n[!] Usando {self.nombre} en {criatura.nombre}...")
+        print(f"[{self.descripcion}]")
+
+        
+        criatura.hp += self.modificador_hp
+        
+       
+        nuevo_atk = criatura.atk + self.modificador_atk
+        criatura.atk = max(1, nuevo_atk) 
+
+      
+        if self.modificador_hp != 0:
+            accion_hp = "recupera" if self.modificador_hp > 0 else "pierde"
+            print(f"  > {criatura.nombre} {accion_hp} {abs(self.modificador_hp)} HP.")
+            
+        if self.modificador_atk != 0:
+            accion_atk = "aumenta" if self.modificador_atk > 0 else "reduce"
+            print(f"  > {criatura.nombre} {accion_atk} su Ataque en {abs(self.modificador_atk)}.")
+
+
+
 # ─────────────────────────
 # MAIN
 # ─────────────────────────
