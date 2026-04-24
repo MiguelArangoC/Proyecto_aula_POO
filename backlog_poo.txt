@@ -1,0 +1,427 @@
+PROYECTO AULA — POO
+
+Juego de Criaturas por Turnos
+
+PRODUCT BACKLOG — Segunda Entrega
+
+Miguel Ángel Arango • Carlos Andrés Otalora • Juan Camilo García C
+
+1. Contexto y Objetivos de la Entrega
+
+Esta entrega responde directamente a la retroalimentación recibida y a
+los tres objetivos evaluados:
+
+  ---------------------- ---------------------------------- --------------
+  Objetivo               Descripción                        Puntuación
+
+  1. Modelo de diseño    Diagrama UML de diseño con         0 – 3 pts
+                         atributos tipados, métodos         
+                         firmados y relaciones completas.   
+
+  2. Implementación del  Estructura + métodos + flujos      0 – 3 pts
+  modelo                 completos con retornos y manejo de 
+                         excepciones.                       
+
+  3. Interfaz de usuario Interfaz funcional que permite     0 – 2 pts
+                         ejecutar todos los requisitos      
+                         definidos.                         
+  ---------------------- ---------------------------------- --------------
+
+1.1 Puntos de Mejora Identificados
+
+La retroalimentación del profesor señaló las siguientes brechas que este
+backlog aborda:
+
+-   Descomposición (0/2): No se presentó descomposición de requisitos.
+    Este backlog incluye tareas granulares por historia de usuario.
+
+-   Implementación (1/2): El código actual no es MVP completo; faltan
+    tipos elementales, clima conectado, captura y persistencia.
+
+-   Sustentación (1.5/3): Se requiere dominio total del código. Se
+    incluye US-10 como historia de calidad y preparación.
+
+-   Modelo (2/3): El diagrama de diseño requiere firmas de métodos,
+    tipos de dato y manejo de excepciones.
+
+2. Plan de Sprints
+
+  ---------- -------------------------- ---------------- -----------------
+  Sprint     Foco Principal             Historias        Objetivo Cubierto
+
+  Sprint 1   Modelo de clases +         US-01, US-02     Objetivo 1
+             Estructura base                             (Modelo diseño)
+
+  Sprint 2   Lógica de combate completa US-03, US-04,    Objetivo 2
+             (tipos, clima, ítems)      US-05            parcial
+
+  Sprint 3   Flujos completos de        US-06, US-07,    Objetivo 2
+             jugador (captura, nivel,   US-08            completo
+             guardado)                                   
+
+  Sprint 4   Interfaz, integración y    US-09, US-10     Objetivo 3 +
+             calidad de sustentación                     sustentación
+  ---------- -------------------------- ---------------- -----------------
+
+3. Backlog Completo de Historias de Usuario
+
+  -----------------------------------------------------------------------
+  US-01 [Sprint 1] Arquitectura | Prioridad: Alta | Story Points: 8
+
+  Historia: Como equipo, necesito un modelo de clases de diseño completo
+  para guiar la implementación.
+  -----------------------------------------------------------------------
+
++-----------------------------------+-----------------------------------+
+| Criterios de aceptación           | Tareas técnicas                   |
+|                                   |                                   |
+| -   Diagrama UML con todas las    | -   T-01a: Revisar                |
+|     clases: Jugador, Criatura,    |     retroalimentación del         |
+|     Tipo, Item, Batalla,          |     profesor y actualizar         |
+|     CondicionClimatica, Mapa,     |     relaciones faltantes.         |
+|     Zona.                         |                                   |
+|                                   | -   T-01b: Agregar firmas de      |
+| -   Atributos con tipos de dato y |     métodos y tipos de retorno al |
+|     visibilidad (private/public)  |     diagrama.                     |
+|     especificados.                |                                   |
+|                                   | -   T-01c: Incluir clases de      |
+| -   Métodos con firmas completas  |     excepción (EquipoLlenoError,  |
+|     (parámetros y tipo de         |     CapturFallidaError, etc.).    |
+|     retorno).                     |                                   |
+|                                   | -   T-01d: Exportar diagrama en   |
+| -   Relaciones de herencia,       |     formato PNG y adjuntar al     |
+|     composición y dependencia     |     repositorio.                  |
+|     claramente marcadas.          |                                   |
+|                                   | RF relacionados: —                |
+| -   Excepciones personalizadas    |                                   |
+|     incluidas en el diagrama.     |                                   |
++-----------------------------------+-----------------------------------+
+
+  -----------------------------------------------------------------------
+  US-02 [Sprint 1] Implementación | Prioridad: Alta | Story Points: 5
+
+  Historia: Como desarrollador, necesito la estructura base de todas las
+  clases implementada en Python para poder construir sobre ella.
+  -----------------------------------------------------------------------
+
++-----------------------------------+-----------------------------------+
+| Criterios de aceptación           | Tareas técnicas                   |
+|                                   |                                   |
+| -   Todas las clases del modelo   | -   T-02a: Crear módulo           |
+|     existen en el código con sus  |     jugador.py con clase Jugador  |
+|     atributos correctamente       |     (nombre, equipo, inventario,  |
+|     tipados.                      |     posicion).                    |
+|                                   |                                   |
+| -   Constructores implementados   | -   T-02b: Refactorizar           |
+|     para cada clase.              |     criatura.py para agregar      |
+|                                   |     defensa, velocidad,           |
+| -   Archivos organizados por      |     precision, nivel,             |
+|     módulos (criatura.py,         |     experiencia.                  |
+|     jugador.py, batalla.py,       |                                   |
+|     etc.).                        | -   T-02c: Crear clase Tipo con   |
+|                                   |     tabla de multiplicadores.     |
+| -   El código importa sin         |                                   |
+|     errores.                      | -   T-02d: Crear clase Item con   |
+|                                   |     efectoPositivo y              |
+|                                   |     efectoNegativo.               |
+|                                   |                                   |
+|                                   | -   T-02e: Crear clase Batalla    |
+|                                   |     con turno, estado y           |
+|                                   |     condicionClimatica.           |
+|                                   |                                   |
+|                                   | -   T-02f: Crear clases Mapa y    |
+|                                   |     Zona.                         |
+|                                   |                                   |
+|                                   | -   T-02g: Crear módulo           |
+|                                   |     excepciones.py.               |
+|                                   |                                   |
+|                                   | RF relacionados: RF1, RF3, RF4    |
++-----------------------------------+-----------------------------------+
+
+  -----------------------------------------------------------------------
+  US-03 [Sprint 2] Lógica de combate | Prioridad: Alta | Story Points: 5
+
+  Historia: Como jugador, quiero que los ataques apliquen multiplicadores
+  de tipo elemental para que las decisiones estratégicas tengan impacto
+  real.
+  -----------------------------------------------------------------------
+
++-----------------------------------+-----------------------------------+
+| Criterios de aceptación           | Tareas técnicas                   |
+|                                   |                                   |
+| -   La clase Tipo calcula         | -   T-03a: Implementar tabla de   |
+|     correctamente el              |     multiplicadores en clase      |
+|     multiplicador (×1.5, ×1.0 o   |     Tipo.                         |
+|     recíproco) entre dos tipos.   |                                   |
+|                                   | -   T-03b: Implementar método     |
+| -   El cálculo de daño en Batalla |     calc                          |
+|     invoca                        | ular_multiplicador(tipo_defensor) |
+|                                   |     → float.                      |
+|    Tipo.calcular_multiplicador(). |                                   |
+|                                   | -   T-03c: Integrar cálculo en el |
+| -   Un ataque de Fuego sobre      |     método ejecutar_turno() de    |
+|     Tierra produce ×1.5 de daño.  |     Batalla.                      |
+|                                   |                                   |
+| -   Un ataque de Agua sobre Fuego | -   T-03d: Probar todos los       |
+|     produce ×1.5 de daño.         |     cruces de tipo con al menos   |
+|                                   |     un caso positivo y uno        |
+| -   Los valores están cubiertos   |     neutro.                       |
+|     por pruebas unitarias o casos |                                   |
+|     de prueba documentados.       | RF relacionados: RF5              |
++-----------------------------------+-----------------------------------+
+
+  -----------------------------------------------------------------------
+  US-04 [Sprint 2] Lógica de combate | Prioridad: Alta | Story Points: 5
+
+  Historia: Como jugador, quiero que el clima de la zona modifique el
+  daño y la precisión en combate para que el entorno influya en la
+  estrategia.
+  -----------------------------------------------------------------------
+
++-----------------------------------+-----------------------------------+
+| Criterios de aceptación           | Tareas técnicas                   |
+|                                   |                                   |
+| -   CondicionC                    | -   T-04a: Completar              |
+| limatica.modificador_ataque(tipo) |     implementación de             |
+|     devuelve 1.20, 0.90 o 1.0     |     CondicionClimatica con los 5  |
+|     según corresponda.            |     climas del análisis.          |
+|                                   |                                   |
+| -   El daño por turno se aplica   | -   T-04b: Conectar               |
+|     correctamente (Fuego en       |     CondicionClimatica con        |
+|     Lluvia pierde 5 HP por        |     Batalla.                      |
+|     turno).                       |                                   |
+|                                   | -   T-04c: Aplicar daño por turno |
+| -   La batalla muestra el clima   |     en el ciclo de combate.       |
+|     activo al inicio (RF9).       |                                   |
+|                                   | -   T-04d: Implementar RF9:       |
+| -   El clima cambia si la zona    |     mostrar condición climática   |
+|     tiene condición base          |     al jugador.                   |
+|     diferente.                    |                                   |
+|                                   | RF relacionados: RF5, RF9         |
+| -   Retornos y excepciones del    |                                   |
+|     método están documentados.    |                                   |
++-----------------------------------+-----------------------------------+
+
+  -----------------------------------------------------------------------
+  US-05 [Sprint 2] Ítems | Prioridad: Alta | Story Points: 3
+
+  Historia: Como jugador, quiero equipar ítems a mis criaturas para
+  obtener ventajas con consecuencias reales en combate.
+  -----------------------------------------------------------------------
+
++-----------------------------------+-----------------------------------+
+| Criterios de aceptación           | Tareas técnicas                   |
+|                                   |                                   |
+| -   Solo se puede equipar un ítem | -   T-05a: Implementar            |
+|     por criatura a la vez.        |     Item.modificar_estadistica()  |
+|                                   |     con efectos positivo y        |
+| -   Equipar un ítem aplica el     |     negativo.                     |
+|     efecto positivo y el negativo |                                   |
+|     de forma inmediata.           | -   T-05b: Implementar            |
+|                                   |                                   |
+| -   Cambiar el ítem revierte el   |    Jugador.equipar_item(criatura, |
+|     anterior antes de aplicar el  |     item) con validaciones.       |
+|     nuevo.                        |                                   |
+|                                   | -   T-05c: Implementar lógica de  |
+| -   Si el jugador no tiene el     |     reemplazo de ítem (revertir → |
+|     ítem en inventario, se lanza  |     equipar nuevo).               |
+|     una excepción.                |                                   |
+|                                   | -   T-05d: Conectar el uso de     |
+| -   El ítem equipado se muestra   |     ítem al turno de combate      |
+|     en RF7.                       |     (RF5).                        |
+|                                   |                                   |
+|                                   | RF relacionados: RF6              |
++-----------------------------------+-----------------------------------+
+
+  -----------------------------------------------------------------------
+  US-06 [Sprint 3] Exploración | Prioridad: Alta | Story Points: 3
+
+  Historia: Como jugador, quiero capturar criaturas salvajes para ampliar
+  mi equipo.
+  -----------------------------------------------------------------------
+
++-----------------------------------+-----------------------------------+
+| Criterios de aceptación           | Tareas técnicas                   |
+|                                   |                                   |
+| -   La captura requiere un ítem   | -   T-06a: Implementar            |
+|     de captura en el inventario.  |     Ju                            |
+|                                   | gador.capturar_criatura(criatura, |
+| -   Si el equipo tiene 6          |     item).                        |
+|     criaturas, se lanza           |                                   |
+|     EquipoLlenoError.             | -   T-06b: Implementar excepción  |
+|                                   |     EquipoLlenoError.             |
+| -   La criatura capturada se      |                                   |
+|     agrega al equipo con sus      | -   T-06c: Implementar lógica de  |
+|     estadísticas base.            |     probabilidad de captura       |
+|                                   |     (basada en HP restante de la  |
+| -   El ítem de captura se consume |     criatura).                    |
+|     del inventario al usarse.     |                                   |
+|                                   | -   T-06d: Consumir ítem de       |
+| -   El jugador recibe             |     captura del inventario.       |
+|     confirmación visual de la     |                                   |
+|     captura exitosa o fallida.    | RF relacionados: RF3              |
++-----------------------------------+-----------------------------------+
+
+  -----------------------------------------------------------------------
+  US-07 [Sprint 3] Progresión | Prioridad: Alta | Story Points: 3
+
+  Historia: Como jugador, quiero que mis criaturas ganen experiencia y
+  suban de nivel tras ganar batallas.
+  -----------------------------------------------------------------------
+
++-----------------------------------+-----------------------------------+
+| Criterios de aceptación           | Tareas técnicas                   |
+|                                   |                                   |
+| -   Al ganar una batalla, la      | -   T-07a: Agregar atributos      |
+|     criatura activa recibe        |     nivel, experiencia,           |
+|     experiencia.                  |     xp_siguiente a Criatura.      |
+|                                   |                                   |
+| -   Al acumular suficiente XP,    | -   T-07b: Implementar            |
+|     sube de nivel                 |                                   |
+|     automáticamente.              |    Criatura.ganar_experiencia(xp) |
+|                                   |     con lógica de subida.         |
+| -   Subir de nivel incrementa     |                                   |
+|     ataque, defensa, velocidad y  | -   T-07c: Implementar escala de  |
+|     HP máximo.                    |     estadísticas al subir de      |
+|                                   |     nivel.                        |
+| -   El jugador ve un mensaje      |                                   |
+|     indicando el nivel alcanzado. | -   T-07d: Integrar en el flujo   |
+|                                   |     de fin de batalla en Batalla. |
+| -   El nivel se muestra en RF7.   |                                   |
+|                                   | RF relacionados: RF8              |
++-----------------------------------+-----------------------------------+
+
+  -----------------------------------------------------------------------
+  US-08 [Sprint 3] Persistencia | Prioridad: Media | Story Points: 3
+
+  Historia: Como jugador, quiero guardar y cargar mi partida para
+  continuar mi progreso en sesiones futuras.
+  -----------------------------------------------------------------------
+
++-----------------------------------+-----------------------------------+
+| Criterios de aceptación           | Tareas técnicas                   |
+|                                   |                                   |
+| -   Se serializa el estado        | -   T-08a: Implementar            |
+|     completo del Jugador (nombre, |     Jugador.guardar(ruta) usando  |
+|     equipo, inventario, posición) |     json.                         |
+|     en un archivo JSON.           |                                   |
+|                                   | -   T-08b: Implementar            |
+| -   Al cargar, el estado se       |     Jugador.cargar(ruta) con      |
+|     restaura exactamente como se  |     manejo de FileNotFoundError.  |
+|     guardó.                       |                                   |
+|                                   | -   T-08c: Serializar criaturas e |
+| -   Si el archivo de guardado no  |     ítems anidados correctamente. |
+|     existe, el sistema lo indica  |                                   |
+|     y permite iniciar partida     | -   T-08d: Integrar opciones de   |
+|     nueva.                        |     guardar/cargar en el menú     |
+|                                   |     principal.                    |
+| -   El guardado ocurre en menos   |                                   |
+|     de 1 segundo.                 | RF relacionados: RF10             |
++-----------------------------------+-----------------------------------+
+
+  -----------------------------------------------------------------------
+  US-09 [Sprint 4] Interfaz | Prioridad: Alta | Story Points: 5
+
+  Historia: Como jugador, quiero una interfaz de consola completa que me
+  permita ejecutar todos los requisitos sin quedar bloqueado.
+  -----------------------------------------------------------------------
+
++-----------------------------------+-----------------------------------+
+| Criterios de aceptación           | Tareas técnicas                   |
+|                                   |                                   |
+| -   Existe un menú principal con  | -   T-09a: Completar menú         |
+|     opciones claras (Explorar,    |     principal en la consola       |
+|     Ver equipo, Ver inventario,   |     (game_state.py).              |
+|     Guardar, Salir).              |                                   |
+|                                   | -   T-09b: Conectar la GUI        |
+| -   El menú de combate ofrece     |     (GUIClaude.py) al backend     |
+|     Atacar, Usar ítem y           |     real sustituyendo los datos   |
+|     Retirarse.                    |     de demostración.              |
+|                                   |                                   |
+| -   Nunca se muestra una pantalla | -   T-09c: Implementar pantalla   |
+|     sin opciones claras.          |     de consulta de equipo e       |
+|                                   |     inventario (RF7).             |
+| -   La GUI (GUIClaude.py) conecta |                                   |
+|     con el backend real           | -   T-09d: Validar flujo completo |
+|     (game_state.py) sin datos     |     end-to-end sin errores no     |
+|     ficticios.                    |     manejados.                    |
+|                                   |                                   |
+| -   El jugador puede completar el | RF relacionados: RF1, RF2, RF5,   |
+|     flujo completo: Crear         | RF7                               |
+|     personaje → Explorar →        |                                   |
+|     Combatir → Subir nivel →      |                                   |
+|     Guardar.                      |                                   |
++-----------------------------------+-----------------------------------+
+
+  -----------------------------------------------------------------------
+  US-10 [Sprint 4] Calidad | Prioridad: Alta | Story Points: 3
+
+  Historia: Como equipo, necesito que el código esté organizado,
+  documentado y que dominemos cada método para la sustentación.
+  -----------------------------------------------------------------------
+
++-----------------------------------+-----------------------------------+
+| Criterios de aceptación           | Tareas técnicas                   |
+|                                   |                                   |
+| -   Cada clase tiene docstring    | -   T-10a: Agregar docstrings a   |
+|     explicando su                 |     todas las clases y métodos.   |
+|     responsabilidad.              |                                   |
+|                                   | -   T-10b: Actualizar README con  |
+| -   Cada método tiene docstring   |     instrucciones de ejecución.   |
+|     con parámetros, retorno y     |                                   |
+|     excepciones posibles.         | -   T-10c: Sesión interna de      |
+|                                   |     revisión cruzada (cada        |
+| -   El README del repositorio     |     integrante explica una        |
+|     describe cómo ejecutar el     |     clase).                       |
+|     juego.                        |                                   |
+|                                   | -   T-10d: Eliminar código muerto |
+| -   Todos los integrantes pueden  |     y comentarios de TODO no      |
+|     explicar cualquier clase del  |     resueltos.                    |
+|     proyecto.                     |                                   |
+|                                   | RF relacionados: —                |
+| -   No existen métodos sin        |                                   |
+|     implementar (sin pass o TODO  |                                   |
+|     sin resolver).                |                                   |
++-----------------------------------+-----------------------------------+
+
+4. Matriz de Trazabilidad RF → Historia de Usuario
+
+  ------------------------------------- ---------------------------------
+  Requisito Funcional                   Historia(s) de Usuario
+
+  RF1 – Crear jugador                   US-01, US-02, US-09
+
+  RF2 – Explorar el mapa                US-09
+
+  RF3 – Capturar criatura               US-02, US-06
+
+  RF4 – Iniciar batalla                 US-02, US-03
+
+  RF5 – Ejecutar turno de combate       US-03, US-04, US-05, US-09
+
+  RF6 – Equipar ítem                    US-05
+
+  RF7 – Consultar equipo e inventario   US-07, US-09
+
+  RF8 – Subir de nivel                  US-07
+
+  RF9 – Mostrar condición climática     US-04
+
+  RF10 – Guardar y cargar progreso      US-08
+  ------------------------------------- ---------------------------------
+
+5. Definición de Terminado (Definition of Done)
+
+Una historia de usuario se considera TERMINADA cuando:
+
+-   El código compila y se ejecuta sin errores no manejados.
+
+-   Todos los criterios de aceptación han sido verificados manualmente.
+
+-   Los métodos tienen docstrings con parámetros, retorno y excepciones.
+
+-   Las excepciones relevantes están implementadas y manejadas.
+
+-   El código fue revisado por al menos otro integrante del equipo.
+
+-   El commit está en el repositorio con un mensaje descriptivo.
