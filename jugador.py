@@ -74,7 +74,7 @@ class Jugador:
         if len(self.equipo) >= CAPACIDAD_MAXIMA_EQUIPO:
             raise EquipoLlenoError(
                 f"El equipo de {self.nombre} ya tiene {CAPACIDAD_MAXIMA_EQUIPO} criaturas.",
-                capacidad_maxima=CAPACIDAD_MAXIMA_EQUIPO,
+                CAPACIDAD_MAXIMA_EQUIPO,
             )
         self.equipo.append(criatura)
 
@@ -136,7 +136,7 @@ class Jugador:
                 return item
         raise ItemNoDisponibleError(
             f"'{nombre_item}' no está en el inventario.",
-            nombre_item=nombre_item,
+            nombre_item,
         )
 
     def consumir_item(self, nombre_item: str) -> None:
@@ -180,7 +180,7 @@ class Jugador:
         if criatura.esta_debilitada():
             raise CriaturaDebilitadaError(
                 f"No se puede equipar un ítem a {criatura.nombre}: está debilitada.",
-                nombre_criatura=criatura.nombre,
+                criatura.nombre,
             )
 
         nuevo_item = self.obtener_item(nombre_item)
@@ -225,7 +225,7 @@ class Jugador:
         if not item.es_captura:
             raise ItemNoDisponibleError(
                 f"'{nombre_item_captura}' no es un ítem de captura.",
-                nombre_item=nombre_item_captura,
+                nombre_item_captura,
             )
 
         # Probabilidad basada en HP restante: cuanto menos HP, más fácil capturar
@@ -237,7 +237,7 @@ class Jugador:
         if random.random() > probabilidad:
             raise CapturaFallidaError(
                 f"{criatura.nombre} escapó del intento de captura.",
-                nombre_criatura=criatura.nombre,
+                criatura.nombre,
             )
 
         self.agregar_criatura(criatura)
@@ -318,7 +318,7 @@ class Jugador:
         except FileNotFoundError:
             raise PartidaNoEncontradaError(
                 f"No se encontró la partida guardada en '{ruta}'.",
-                ruta=ruta,
+                ruta,
             )
 
         jugador = cls(datos["nombre"], datos["posicion"])

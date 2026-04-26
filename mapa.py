@@ -139,7 +139,7 @@ class Mapa:
         if nombre not in self.zonas:
             raise ZonaInexistenteError(
                 f"La zona '{nombre}' no existe en el mapa.",
-                nombre_zona=nombre,
+                nombre,
             )
         return self.zonas[nombre]
 

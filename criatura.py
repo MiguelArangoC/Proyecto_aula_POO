@@ -121,7 +121,7 @@ class Criatura:
         if self.esta_debilitada():
             raise CriaturaDebilitadaError(
                 f"{self.nombre} está debilitada y no puede atacar.",
-                nombre_criatura=self.nombre,
+                self.nombre,
             )
 
         # ¿El ataque conecta?

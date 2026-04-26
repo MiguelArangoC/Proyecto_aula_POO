@@ -66,11 +66,24 @@ class Batalla:
 
         Lanza:
             ValueError: Si el jugador no tiene ninguna criatura en su equipo.
+            CriaturaDebilitadaError: Si la criatura enemiga o todas las del jugador están debilitadas.
         """
         from excepciones import CriaturaDebilitadaError
 
         if not jugador.equipo:
             raise ValueError("El jugador debe tener al menos una criatura para batallar.")
+
+        if jugador.criatura_activa() is None:
+            raise CriaturaDebilitadaError(
+                "Todas las criaturas del jugador están debilitadas.",
+                jugador.equipo[0].nombre
+            )
+
+        if enemigo.esta_debilitada():
+            raise CriaturaDebilitadaError(
+                "No se puede iniciar una batalla contra un enemigo debilitado.",
+                enemigo.nombre
+            )
 
         self.jugador: "Jugador" = jugador
         self.enemigo: "Criatura" = enemigo
@@ -156,9 +169,13 @@ class Batalla:
             return self.estado
 
         # --- 2. Usar ítem (opcional) ---
-        if usar_item and nombre_item:
+        if usar_item:
+            if not nombre_item:
+                from excepciones import ItemNoDisponibleError
+                raise ItemNoDisponibleError("Nombre de ítem no proporcionado.", "")
             self.jugador.equipar_item(criatura_jugador, nombre_item)
             self._registrar(f"{self.jugador.nombre} usa {nombre_item} en {criatura_jugador.nombre}.")
+
 
         # --- 3. Determinar orden de ataque por velocidad ---
         jugador_primero = criatura_jugador.velocidad >= self.enemigo.velocidad
