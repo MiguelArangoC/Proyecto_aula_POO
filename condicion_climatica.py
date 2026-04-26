@@ -38,7 +38,7 @@ DATOS_CLIMA: dict[str, dict] = {
     "Caluroso": {
         "beneficia": ["Fuego", "Tierra"],
         "perjudica": ["Agua"],
-        "dano_turno": {},
+        "dano_turno": {"Agua": 3},
     },
     "Nevado": {
         "beneficia": ["Agua"],
