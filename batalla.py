@@ -56,18 +56,6 @@ class Batalla:
         enemigo: "Criatura",
         nombre_clima: str = "Soleado",
     ) -> None:
-        """
-        Inicializa una batalla entre el jugador y una criatura enemiga.
-
-        Parámetros:
-            jugador (Jugador): El jugador participante.
-            enemigo (Criatura): La criatura enemiga a enfrentar.
-            nombre_clima (str): Nombre del clima activo. Por defecto 'Soleado'.
-
-        Lanza:
-            ValueError: Si el jugador no tiene ninguna criatura en su equipo.
-            CriaturaDebilitadaError: Si la criatura enemiga o todas las del jugador están debilitadas.
-        """
         from excepciones import CriaturaDebilitadaError
 
         if not jugador.equipo:
@@ -97,48 +85,21 @@ class Batalla:
             f"[{self.condicion_climatica.nombre}]"
         )
 
-    # ─────────────────────────────────────────
-    # ACCESO INTERNO
-    # ─────────────────────────────────────────
-
     def _registrar(self, mensaje: str) -> None:
-        """
-        Agrega un mensaje al log de la batalla.
-
-        Parámetros:
-            mensaje (str): Texto del evento a registrar.
-
-        Retorna:
-            None
-        """
         self.log.append(f"[Turno {self.turno}] {mensaje}")
 
-    # ─────────────────────────────────────────
-    # EJECUCIÓN DE TURNO
-    # ─────────────────────────────────────────
+    def _ejecutar_ataque(self, atacante: "Criatura", defensor: "Criatura") -> tuple[bool, int, float]:
+        """Ejecuta un ataque invocando el multiplicador de tipos en Batalla."""
+        if random.random() > atacante.precision:
+            return False, 0, 1.0
+
+        dano_base = random.randint(int(atacante.atk * 0.8), int(atacante.atk * 1.2))
+        mult_tipo = atacante.tipo.calcular_multiplicador(defensor.tipo)
+        dano_final = max(1, int(dano_base * mult_tipo) - defensor.defensa // 2)
+        defensor.hp = max(0, defensor.hp - dano_final)
+        return True, dano_final, mult_tipo
 
     def ejecutar_turno(self, usar_item: bool = False, nombre_item: str = "") -> EstadoBatalla:
-        """
-        Ejecuta un turno completo de combate.
-
-        Orden de acciones por turno:
-          1. Aplicar daño por turno del clima (a ambas criaturas).
-          2. Opcionalmente usar un ítem sobre la criatura del jugador.
-          3. Determinar el orden de ataque según velocidad.
-          4. Atacar y aplicar daño con multiplicadores de tipo y clima.
-          5. Verificar condición de fin de batalla.
-
-        Parámetros:
-            usar_item (bool): Si True, el jugador usa un ítem este turno.
-            nombre_item (str): Nombre del ítem a usar (requerido si usar_item=True).
-
-        Retorna:
-            EstadoBatalla: El estado actualizado tras el turno.
-
-        Lanza:
-            RuntimeError: Si se llama cuando la batalla ya terminó.
-            ItemNoDisponibleError: Si el ítem no existe en el inventario.
-        """
         if self.estado != EstadoBatalla.EN_CURSO:
             raise RuntimeError("La batalla ya ha terminado.")
 
@@ -148,7 +109,6 @@ class Batalla:
             self._registrar("El jugador no tiene criaturas disponibles. ¡Derrota!")
             return self.estado
 
-        # --- 1. Daño por turno del clima ---
         dano_clima_jugador = self.condicion_climatica.aplicar_dano_turno(criatura_jugador)
         dano_clima_enemigo = self.condicion_climatica.aplicar_dano_turno(self.enemigo)
 
@@ -163,12 +123,10 @@ class Batalla:
                 f"{dano_clima_enemigo} de daño a {self.enemigo.nombre}."
             )
 
-        # Verificar si alguno ya cayó por el clima
         if self._verificar_fin():
             self.turno += 1
             return self.estado
 
-        # --- 2. Usar ítem (opcional) ---
         if usar_item:
             if not nombre_item:
                 from excepciones import ItemNoDisponibleError
@@ -176,8 +134,6 @@ class Batalla:
             self.jugador.equipar_item(criatura_jugador, nombre_item)
             self._registrar(f"{self.jugador.nombre} usa {nombre_item} en {criatura_jugador.nombre}.")
 
-
-        # --- 3. Determinar orden de ataque por velocidad ---
         jugador_primero = criatura_jugador.velocidad >= self.enemigo.velocidad
 
         atacantes = (
@@ -186,24 +142,21 @@ class Batalla:
             else [(self.enemigo, criatura_jugador), (criatura_jugador, self.enemigo)]
         )
 
-        # --- 4. Ejecutar ataques ---
         for atacante, defensor in atacantes:
             if atacante.esta_debilitada() or defensor.esta_debilitada():
                 continue
 
-            # Modificador de clima sobre el atacante
             mod_clima = self.condicion_climatica.modificador_ataque(atacante.tipo.nombre)
             atk_original = atacante.atk
             atacante.atk = int(atacante.atk * mod_clima)
 
-            conectó, dano = atacante.atacar(defensor)
+            conecto, dano, mult_tipo = self._ejecutar_ataque(atacante, defensor)
+            atacante.atk = atk_original
 
-            atacante.atk = atk_original   # restaurar ataque original
-
-            if conectó:
+            if conecto:
                 self._registrar(
                     f"{atacante.nombre} ataca a {defensor.nombre} -> {dano} de dano "
-                    f"(clima x{mod_clima:.2f})."
+                    f"(tipo x{mult_tipo:.2f}, clima x{mod_clima:.2f})."
                 )
             else:
                 self._registrar(f"{atacante.nombre} falló su ataque.")
@@ -211,32 +164,15 @@ class Batalla:
             if self._verificar_fin():
                 break
 
-        # --- 5. Avanzar turno ---
         self.turno += 1
         return self.estado
 
     def retirarse(self) -> EstadoBatalla:
-        """
-        El jugador decide retirarse de la batalla.
-
-        Retorna:
-            EstadoBatalla: RETIRADA siempre.
-        """
         self.estado = EstadoBatalla.RETIRADA
         self._registrar(f"{self.jugador.nombre} se retiró de la batalla.")
         return self.estado
 
-    # ─────────────────────────────────────────
-    # VERIFICACIÓN DE FIN
-    # ─────────────────────────────────────────
-
     def _verificar_fin(self) -> bool:
-        """
-        Comprueba si la batalla ha terminado y actualiza el estado.
-
-        Retorna:
-            bool: True si la batalla terminó (victoria o derrota).
-        """
         if self.enemigo.esta_debilitada():
             self.estado = EstadoBatalla.VICTORIA
             xp_ganada = self.XP_POR_VICTORIA + self.enemigo.nivel * 10
@@ -261,27 +197,13 @@ class Batalla:
     # ─────────────────────────────────────────
 
     def resumen(self) -> str:
-        """
-        Retorna un resumen del estado actual de la batalla.
+        criatura_jugador = self.jugador.criatura_activa()
+        nombre_j, hp_j = (criatura_jugador.nombre, criatura_jugador.hp) if criatura_jugador else ("Ninguna", 0)
 
-        Retorna:
-            str: Texto con el turno, el clima y los HP de ambos participantes.
-        """
-        criatura = self.jugador.criatura_activa()
-        jugador_str = (
-            f"{criatura.nombre} HP:{criatura.hp}/{criatura.hp_max}"
-            if criatura
-            else "Sin criaturas"
-        )
         return (
-            f"--- Turno {self.turno} | {self.condicion_climatica.nombre} ---\n"
-            f"  Jugador: {jugador_str}\n"
-            f"  Enemigo: {self.enemigo.nombre} HP:{self.enemigo.hp}/{self.enemigo.hp_max}\n"
-            f"  Estado: {self.estado.name}"
-        )
-
-    def __repr__(self) -> str:
-        return (
-            f"Batalla(enemigo='{self.enemigo.nombre}', turno={self.turno}, "
-            f"estado={self.estado.name})"
+            f"Estado: {self.estado.name}\n"
+            f"Turno: {self.turno}\n"
+            f"Jugador: {nombre_j} HP={hp_j}\n"
+            f"Enemigo: {self.enemigo.nombre} HP={self.enemigo.hp}\n"
+            f"Clima: {self.condicion_climatica.nombre}"
         )
