@@ -304,6 +304,19 @@ class GameStateAdapter:
         self.active_creature = creature_gui
 
 
+
+    def mapa_mundo(self) -> dict[str, dict]:
+        """Retorna un snapshot de todas las zonas del mapa y sus conexiones."""
+        return {
+            nombre: {
+                "nombre": zona.nombre,
+                "clima_base": zona.clima_base,
+                "criaturas_salvajes": list(zona.criaturas_salvajes),
+                "conexiones": dict(zona.conexiones),
+            }
+            for nombre, zona in self.juego.mapa.zonas.items()
+        }
+
     def mini_mapa(self) -> str:
         return self.juego.mini_mapa()
 

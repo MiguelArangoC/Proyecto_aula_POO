@@ -568,7 +568,6 @@ class CreaturesScreen(tk.Frame):
 #  PANTALLA: SISTEMA DE COMBATE
 # ══════════════════════════════════════════════════════════════
 class CombatScreen(tk.Frame):
-    ENVIRONMENTS = ["☀ Normal", "🌧 Lluvia", "⛈ Tormenta", "❄ Nevado", "🔥 Volcánico"]
     ENEMY_POOL = [
         {"name": "Wraithling",  "type": "Sombra", "hp": 80,  "max_hp": 80,
          "atk": 18, "icon": "👻", "color": C["purple_light"], "status": None},
@@ -582,7 +581,6 @@ class CombatScreen(tk.Frame):
         super().__init__(parent, bg=C["bg_dark"])
         self.app = app
         self.enemy = None
-        self.environment = "☀ Normal"
         self.log_lines = []
         self.combat_active = False
         self.last_player_hp = None
@@ -596,18 +594,11 @@ class CombatScreen(tk.Frame):
                  font=FONTS["subtitle"], fg=C["red_light"],
                  bg=C["bg_panel"]).pack(side="left", pady=12, padx=8)
 
-        # Selector de ambiente
-        env_frame = tk.Frame(hdr, bg=C["bg_panel"])
-        env_frame.pack(side="right", padx=12)
-        tk.Label(env_frame, text="Ambiente:", font=FONTS["body_sm"],
-                 fg=C["text_dim"], bg=C["bg_panel"]).pack(side="left")
-        self.env_var = tk.StringVar(value=self.environment)
-        env_menu = ttk.Combobox(env_frame, textvariable=self.env_var,
-                                 values=self.ENVIRONMENTS, state="readonly",
-                                 width=14, font=FONTS["body_sm"])
-        env_menu.pack(side="left", padx=6)
-        env_menu.bind("<<ComboboxSelected>>",
-                       lambda _: self._change_env(self.env_var.get()))
+        self.climate_label = tk.Label(
+            hdr, text="Clima de zona: ---", font=FONTS["body_sm"],
+            fg=C["blue_light"], bg=C["bg_panel"]
+        )
+        self.climate_label.pack(side="right", padx=12)
 
         body = tk.Frame(self, bg=C["bg_dark"])
         body.pack(fill="both", expand=True, padx=10, pady=10)
@@ -692,12 +683,15 @@ class CombatScreen(tk.Frame):
         self.log_text.tag_config("dim",   foreground=C["text_dim"])
 
         self._refresh_combatants()
+        self._refresh_zone_climate_label()
         self._render_battle_canvas("Esperando combate...")
 
-    def _change_env(self, env):
-        self.environment = env
-        # BACKEND: self.app.backend.set_environment(env)
-        self._log(f"El ambiente cambia a {env}.", "blue")
+    def _refresh_zone_climate_label(self):
+        try:
+            clima = self.app.state.clima_batalla_actual()
+            self.climate_label.config(text=f"Clima de zona: {clima}")
+        except Exception:
+            self.climate_label.config(text="Clima de zona: ---")
 
     def _refresh_combatants(self):
         for w in self.player_frame.winfo_children():
@@ -796,6 +790,7 @@ class CombatScreen(tk.Frame):
             self._log("═" * 30, "dim")
             self._log(msg_batalla, "red")
             clima = self.app.state.clima_batalla_actual()
+            self._refresh_zone_climate_label()
             self._log(f"Clima: {clima}", "blue")
             self.enemy = self.app.state.criatura_enemiga_gui()
             self.combat_active = True
@@ -1093,6 +1088,14 @@ class MapScreen(tk.Frame):
     def __init__(self, parent, app):
         super().__init__(parent, bg=C["bg_dark"])
         self.app = app
+        self.zone_layout = {}
+        self.zone_nodes = {}
+        self.direction_vectors = {
+            "norte": (0, -1),
+            "sur": (0, 1),
+            "este": (1, 0),
+            "oeste": (-1, 0),
+        }
         self._build()
 
     def _build(self):
@@ -1145,13 +1148,9 @@ class MapScreen(tk.Frame):
                  fg=C["text_dim"], bg=C["bg_panel"]).pack(pady=12)
 
         self.minimap_canvas = tk.Canvas(
-            right, bg=C["bg_dark"], height=280, relief="flat", bd=0, highlightthickness=0
+            right, bg=C["bg_dark"], height=420, relief="flat", bd=0, highlightthickness=0
         )
-        self.minimap_canvas.pack(fill="x", padx=16, pady=(0, 8))
-
-        self.minimap_text = tk.Text(right, bg=C["bg_dark"], fg=C["text_bright"],
-                                    font=("Courier", 14), relief="flat", bd=0, state="disabled", width=40)
-        self.minimap_text.pack(fill="both", expand=True, padx=16, pady=(0, 16))
+        self.minimap_canvas.pack(fill="both", expand=True, padx=16, pady=(0, 16))
 
     def _make_move_btn(self, parent, d, side="top"):
         b = tk.Button(parent, text=d, command=lambda: self._move(d.lower()),
@@ -1180,49 +1179,81 @@ class MapScreen(tk.Frame):
             self.btn_este.config(state="normal" if "este" in conexiones else "disabled")
             self.btn_oeste.config(state="normal" if "oeste" in conexiones else "disabled")
             
-            mapa_str = self.app.state.mini_mapa()
-            self.minimap_text.config(state="normal")
-            self.minimap_text.delete("1.0", "end")
-            self.minimap_text.insert("end", mapa_str)
-            
-            for i, line in enumerate(mapa_str.split("\n")):
-                if "[X]" in line:
-                    start_idx = line.find("[X]")
-                    self.minimap_text.tag_add("player", f"{i+1}.{start_idx}", f"{i+1}.{start_idx+3}")
-            self.minimap_text.tag_config("player", foreground=C["red_light"], font=("Courier", 14, "bold"))
-            self._draw_map_canvas(mapa_str)
-            
-            self.minimap_text.config(state="disabled")
+            mapa_info = self.app.state.mapa_mundo()
+            self._draw_map_canvas(mapa_info, zona["nombre"])
         except Exception:
             pass
 
-    def _draw_map_canvas(self, mapa_str):
-        self.minimap_canvas.delete("all")
-        rows = [row for row in mapa_str.split("\n") if row.strip()]
-        if not rows:
+    def _build_zone_layout(self, mapa_info, zona_actual):
+        if not mapa_info:
+            return {}
+        start = zona_actual if zona_actual in mapa_info else next(iter(mapa_info))
+        layout = {start: (0, 0)}
+        queue = [start]
+        while queue:
+            nombre = queue.pop(0)
+            x, y = layout[nombre]
+            conexiones = mapa_info[nombre]["conexiones"]
+            for direccion, destino in conexiones.items():
+                dx, dy = self.direction_vectors.get(direccion, (0, 0))
+                if destino not in layout:
+                    layout[destino] = (x + dx, y + dy)
+                    queue.append(destino)
+        return layout
+
+    def _move_to_zone(self, destino, zona_actual):
+        if destino == zona_actual:
             return
-        cols = max(len(r) for r in rows)
-        cw, ch = 22, 22
-        pad = 10
-        self.minimap_canvas.config(width=(cols * cw) + 2 * pad, height=(len(rows) * ch) + 2 * pad)
-        for y, row in enumerate(rows):
-            for x, cell in enumerate(row):
-                if cell == " ":
-                    continue
-                x1 = pad + x * cw
-                y1 = pad + y * ch
-                x2 = x1 + cw - 2
-                y2 = y1 + ch - 2
-                fill = C["bg_card"]
-                outline = C["border"]
-                if cell == "X":
-                    fill = C["red_light"]
-                    outline = C["gold"]
-                elif cell in "[]":
-                    fill = C["border_gold"]
-                self.minimap_canvas.create_rectangle(x1, y1, x2, y2, fill=fill, outline=outline)
-                if cell == "X":
-                    self.minimap_canvas.create_text((x1 + x2) / 2, (y1 + y2) / 2, text="🧭", font=("", 10))
+        conexiones = self.app.state.obtener_conexiones()
+        direccion = next((d for d, z in conexiones.items() if z == destino), None)
+        if not direccion:
+            messagebox.showwarning(
+                "Ruta no directa",
+                f"No puedes ir directamente desde {zona_actual} hasta {destino}."
+            )
+            return
+        self._move(direccion)
+
+    def _draw_map_canvas(self, mapa_info, zona_actual):
+        self.minimap_canvas.delete("all")
+        self.zone_nodes = {}
+        if not mapa_info:
+            return
+        self.zone_layout = self._build_zone_layout(mapa_info, zona_actual)
+        scale = 180
+        offset_x, offset_y = 230, 220
+        box_w, box_h = 160, 84
+
+        for origen, datos in mapa_info.items():
+            x1, y1 = self.zone_layout.get(origen, (0, 0))
+            cx1 = offset_x + x1 * scale
+            cy1 = offset_y + y1 * scale
+            for _, destino in datos["conexiones"].items():
+                x2, y2 = self.zone_layout.get(destino, (0, 0))
+                cx2 = offset_x + x2 * scale
+                cy2 = offset_y + y2 * scale
+                self.minimap_canvas.create_line(cx1, cy1, cx2, cy2, fill=C["border_gold"], width=2)
+
+        for nombre, datos in mapa_info.items():
+            x, y = self.zone_layout.get(nombre, (0, 0))
+            cx = offset_x + x * scale
+            cy = offset_y + y * scale
+            x1, y1 = cx - box_w // 2, cy - box_h // 2
+            x2, y2 = cx + box_w // 2, cy + box_h // 2
+            activo = nombre == zona_actual
+            fill = C["red"] if activo else C["bg_card"]
+            outline = C["gold"] if activo else C["border"]
+            rect = self.minimap_canvas.create_rectangle(
+                x1, y1, x2, y2, fill=fill, outline=outline, width=3 if activo else 1
+            )
+            criaturas = ", ".join(datos["criaturas_salvajes"]) or "Sin criaturas"
+            text = f"{nombre}\n🌦 {datos['clima_base']}\n🐾 {criaturas}"
+            txt = self.minimap_canvas.create_text(
+                cx, cy, text=text, fill=C["text_bright"], font=FONTS["body_sm"], justify="center"
+            )
+            self.zone_nodes[nombre] = (rect, txt)
+            self.minimap_canvas.tag_bind(rect, "<Button-1>", lambda _, z=nombre: self._move_to_zone(z, zona_actual))
+            self.minimap_canvas.tag_bind(txt, "<Button-1>", lambda _, z=nombre: self._move_to_zone(z, zona_actual))
 
 
 # ══════════════════════════════════════════════════════════════
