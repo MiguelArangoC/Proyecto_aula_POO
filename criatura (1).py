@@ -7,7 +7,6 @@ puede capturar y usar en combate. Incluye todos los atributos de combate
 """
 
 from __future__ import annotations
-import random
 from typing import Optional, TYPE_CHECKING
 
 from tipo import Tipo
@@ -35,8 +34,8 @@ class Criatura:
         item_equipado (Optional[Item]): Ítem actualmente equipado (None si vacío).
     """
 
-    XP_BASE: int = 100          # XP necesaria para pasar del nivel 1 al 2
-    XP_FACTOR: float = 1.5      # Factor multiplicador por nivel
+    XP_BASE: int = 100        # XP necesaria para pasar del nivel 1 al 2
+    XP_FACTOR: float = 1.5    # Factor multiplicador por nivel
 
     def __init__(
         self,
@@ -85,7 +84,7 @@ class Criatura:
         self.item_equipado: Optional["Item"] = None
 
     # ─────────────────────────────────────────
-    # COMBATE
+    # ESTADO
     # ─────────────────────────────────────────
 
     def esta_debilitada(self) -> bool:
@@ -97,62 +96,20 @@ class Criatura:
         """
         return self.hp <= 0
 
-    def atacar(self, objetivo: Criatura) -> tuple[bool, int]:
-        """
-        Ejecuta un ataque contra una criatura objetivo.
-
-        El daño se calcula con variación aleatoria (±20 %), luego se
-        aplica el multiplicador de tipo y se reduce por la defensa del objetivo.
-        La precisión determina si el ataque conecta.
-
-        Parámetros:
-            objetivo (Criatura): La criatura que recibe el ataque.
-
-        Retorna:
-            tuple[bool, int]: (ataque_conectó, daño_infligido).
-                - ataque_conectó: False si el ataque falló por precisión.
-                - daño_infligido: 0 si falló, valor positivo si conectó.
-
-        Lanza:
-            CriaturaDebilitadaError: Si esta criatura ya está debilitada.
-        """
-        from excepciones import CriaturaDebilitadaError
-
-        if self.esta_debilitada():
-            raise CriaturaDebilitadaError(
-                f"{self.nombre} está debilitada y no puede atacar.",
-                self.nombre,
-            )
-
-        # ¿El ataque conecta?
-        if random.random() > self.precision:
-            return False, 0
-
-        # Daño base con variación
-        dano_base = random.randint(int(self.atk * 0.8), int(self.atk * 1.2))
-
-        # Multiplicador de tipo
-        mult_tipo = self.tipo.calcular_multiplicador(objetivo.tipo)
-
-        # Reducción por defensa (mínimo 1 de daño)
-        dano_final = max(1, int(dano_base * mult_tipo) - objetivo.defensa // 2)
-
-        objetivo.hp = max(0, objetivo.hp - dano_final)
-        return True, dano_final
-
     # ─────────────────────────────────────────
     # PROGRESIÓN
     # ─────────────────────────────────────────
 
     def ganar_experiencia(self, xp: int) -> bool:
         """
-        Agrega experiencia a la criatura y sube de nivel si corresponde.
+        Agrega experiencia a la criatura y sube de nivel tantas veces como
+        corresponda si la XP ganada supera uno o más umbrales.
 
         Parámetros:
             xp (int): Cantidad de experiencia ganada (debe ser > 0).
 
         Retorna:
-            bool: True si la criatura subió de nivel, False en caso contrario.
+            bool: True si la criatura subió al menos un nivel, False si no.
 
         Lanza:
             ValueError: Si xp es menor o igual a 0.
@@ -161,14 +118,16 @@ class Criatura:
             raise ValueError("La experiencia ganada debe ser mayor que 0.")
 
         self.experiencia += xp
-        if self.experiencia >= self.xp_siguiente:
+        subio = False
+        while self.experiencia >= self.xp_siguiente:
             self._subir_nivel()
-            return True
-        return False
+            subio = True
+        return subio
 
     def _subir_nivel(self) -> None:
         """
         Incrementa el nivel de la criatura y escala sus estadísticas.
+        Descuenta la XP del umbral actual antes de recalcularlo.
         Método interno; usar ganar_experiencia() desde el exterior.
 
         Retorna:
@@ -180,7 +139,7 @@ class Criatura:
 
         # Escala de estadísticas al subir de nivel
         self.hp_max = int(self.hp_max * 1.10)
-        self.hp = self.hp_max          # restaura HP al subir de nivel
+        self.hp = self.hp_max        # restaura HP al subir de nivel
         self.atk = int(self.atk * 1.08)
         self.defensa = int(self.defensa * 1.05)
         self.velocidad = int(self.velocidad * 1.05)

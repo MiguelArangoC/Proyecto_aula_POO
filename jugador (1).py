@@ -275,6 +275,18 @@ class Jugador:
                     "nivel": c.nivel,
                     "experiencia": c.experiencia,
                     "xp_siguiente": c.xp_siguiente,
+                    "item_equipado": (
+                        {
+                            "nombre": c.item_equipado.nombre,
+                            "descripcion": c.item_equipado.descripcion,
+                            "efecto_positivo": c.item_equipado.efecto_positivo,
+                            "efecto_negativo": c.item_equipado.efecto_negativo,
+                            "es_consumible": c.item_equipado.es_consumible,
+                            "es_captura": c.item_equipado.es_captura,
+                        }
+                        if c.item_equipado is not None
+                        else None
+                    ),
                 }
                 for c in self.equipo
             ],
@@ -337,6 +349,18 @@ class Jugador:
             c.hp = cd["hp"]
             c.experiencia = cd["experiencia"]
             c.xp_siguiente = cd["xp_siguiente"]
+            # Restaurar ítem equipado si existía
+            if cd.get("item_equipado") is not None:
+                id_ = cd["item_equipado"]
+                item_eq = Item(
+                    nombre=id_["nombre"],
+                    descripcion=id_["descripcion"],
+                    efecto_positivo=id_["efecto_positivo"],
+                    efecto_negativo=id_["efecto_negativo"],
+                    es_consumible=id_["es_consumible"],
+                    es_captura=id_["es_captura"],
+                )
+                c.item_equipado = item_eq
             jugador.equipo.append(c)
 
         for id_ in datos["inventario"]:
