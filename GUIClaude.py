@@ -288,6 +288,7 @@ class StartScreen(tk.Frame):
 # ══════════════════════════════════════════════════════════════
 class SideNav(tk.Frame):
     TABS = [
+        ("🗺️", "Mapa",       "map"),
         ("🐉", "Criaturas",  "creatures"),
         ("⚔️",  "Combate",    "combat"),
         ("🎒", "Inventario", "inventory"),
@@ -321,11 +322,27 @@ class SideNav(tk.Frame):
 
         # Espacio + info jugador abajo
         tk.Frame(self, bg=C["bg_panel"]).pack(expand=True)
+        
+        save_btn = tk.Button(
+            self, text="💾\nGuardar", command=self._save_game,
+            bg=C["bg_panel"], fg=C["text_mid"],
+            activebackground=C["bg_card"], activeforeground=C["green_light"],
+            font=FONTS["body_sm"], relief="flat", bd=0, pady=8, cursor="hand2"
+        )
+        save_btn.pack(fill="x", padx=4, pady=2)
+
         SeparatorLine(self).pack(fill="x", padx=8, pady=6)
         self.gold_label = tk.Label(self, text="💰\n—",
                                     font=FONTS["body_sm"],
                                     fg=C["gold"], bg=C["bg_panel"])
         self.gold_label.pack(pady=(0, 12))
+
+    def _save_game(self):
+        try:
+            self.app.state.guardar_partida()
+            messagebox.showinfo("Partida Guardada", "Tu progreso ha sido guardado exitosamente.")
+        except Exception as e:
+            messagebox.showerror("Error al guardar", str(e))
 
     def set_active(self, key):
         for k, btn in self._buttons.items():
@@ -1006,6 +1023,111 @@ class InventoryScreen(tk.Frame):
 
 
 # ══════════════════════════════════════════════════════════════
+#  PANTALLA: EXPLORACIÓN DEL MAPA
+# ══════════════════════════════════════════════════════════════
+class MapScreen(tk.Frame):
+    def __init__(self, parent, app):
+        super().__init__(parent, bg=C["bg_dark"])
+        self.app = app
+        self._build()
+
+    def _build(self):
+        hdr = tk.Frame(self, bg=C["bg_panel"])
+        hdr.pack(fill="x")
+        tk.Label(hdr, text="  🗺️  MAPA DE AETHERMOOR",
+                 font=FONTS["subtitle"], fg=C["frost"],
+                 bg=C["bg_panel"]).pack(side="left", pady=12, padx=8)
+
+        body = tk.Frame(self, bg=C["bg_dark"])
+        body.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Panel izquierdo: Info y controles de movimiento
+        left = tk.Frame(body, bg=C["bg_panel"],
+                         highlightbackground=C["border"], highlightthickness=1)
+        left.pack(side="left", fill="y", padx=(0, 8))
+
+        tk.Label(left, text="ZONA ACTUAL", font=FONTS["btn_sm"],
+                 fg=C["text_dim"], bg=C["bg_panel"]).pack(pady=(12, 4))
+                 
+        self.zone_name = tk.Label(left, text="---", font=FONTS["heading"],
+                                  fg=C["text_bright"], bg=C["bg_panel"])
+        self.zone_name.pack()
+        
+        self.zone_desc = tk.Label(left, text="---", font=FONTS["lore"],
+                                  fg=C["text_mid"], bg=C["bg_panel"], wraplength=220, justify="center")
+        self.zone_desc.pack(pady=8, padx=12)
+        
+        SeparatorLine(left).pack(fill="x", padx=16, pady=8)
+
+        tk.Label(left, text="MOVERSE A:", font=FONTS["btn_sm"],
+                 fg=C["text_dim"], bg=C["bg_panel"]).pack(pady=4)
+
+        self.btn_norte = self._make_move_btn(left, "Norte")
+        
+        mid_row = tk.Frame(left, bg=C["bg_panel"])
+        mid_row.pack()
+        self.btn_oeste = self._make_move_btn(mid_row, "Oeste", side="left")
+        tk.Frame(mid_row, bg=C["bg_panel"], width=20).pack(side="left") # Espacio
+        self.btn_este = self._make_move_btn(mid_row, "Este", side="left")
+        
+        self.btn_sur = self._make_move_btn(left, "Sur")
+
+        # Panel derecho: Minimapa
+        right = tk.Frame(body, bg=C["bg_panel"],
+                          highlightbackground=C["border"], highlightthickness=1)
+        right.pack(side="left", fill="both", expand=True)
+
+        tk.Label(right, text="VISTA DEL MAPA", font=FONTS["btn_sm"],
+                 fg=C["text_dim"], bg=C["bg_panel"]).pack(pady=12)
+
+        self.minimap_text = tk.Text(right, bg=C["bg_dark"], fg=C["text_bright"],
+                                    font=("Courier", 14), relief="flat", bd=0, state="disabled", width=40)
+        self.minimap_text.pack(fill="both", expand=True, padx=16, pady=(0, 16))
+
+    def _make_move_btn(self, parent, d, side="top"):
+        b = tk.Button(parent, text=d, command=lambda: self._move(d.lower()),
+                      bg=C["bg_card"], fg=C["gold"], font=FONTS["btn_sm"],
+                      activebackground=C["bg_hover"], activeforeground=C["gold_light"],
+                      relief="flat", bd=0, width=8, pady=4, cursor="hand2")
+        b.pack(side=side, pady=2, padx=2)
+        return b
+
+    def _move(self, direction):
+        try:
+            self.app.state.mover(direction)
+            self.refresh()
+        except Exception as e:
+            messagebox.showwarning("No puedes ir allí", str(e))
+
+    def refresh(self):
+        try:
+            zona = self.app.state.info_zona_actual()
+            self.zone_name.config(text=zona["nombre"])
+            self.zone_desc.config(text=zona["descripcion"])
+            
+            conexiones = self.app.state.obtener_conexiones()
+            self.btn_norte.config(state="normal" if "norte" in conexiones else "disabled")
+            self.btn_sur.config(state="normal" if "sur" in conexiones else "disabled")
+            self.btn_este.config(state="normal" if "este" in conexiones else "disabled")
+            self.btn_oeste.config(state="normal" if "oeste" in conexiones else "disabled")
+            
+            mapa_str = self.app.state.mini_mapa()
+            self.minimap_text.config(state="normal")
+            self.minimap_text.delete("1.0", "end")
+            self.minimap_text.insert("end", mapa_str)
+            
+            for i, line in enumerate(mapa_str.split("\n")):
+                if "[X]" in line:
+                    start_idx = line.find("[X]")
+                    self.minimap_text.tag_add("player", f"{i+1}.{start_idx}", f"{i+1}.{start_idx+3}")
+            self.minimap_text.tag_config("player", foreground=C["red_light"], font=("Courier", 14, "bold"))
+            
+            self.minimap_text.config(state="disabled")
+        except Exception:
+            pass
+
+
+# ══════════════════════════════════════════════════════════════
 #  PANTALLA: TIENDA / COMERCIO
 # ══════════════════════════════════════════════════════════════
 class ShopScreen(tk.Frame):
@@ -1209,14 +1331,12 @@ class MainScreen(tk.Frame):
         self.content.pack(side="left", fill="both", expand=True)
 
         self._screens = {
+            "map":       MapScreen(self.content, self.app),
             "creatures": CreaturesScreen(self.content, self.app),
             "combat":    CombatScreen(self.content, self.app),
             "inventory": InventoryScreen(self.content, self.app),
             "shop":      ShopScreen(self.content, self.app),
         }
-
-        for s in self._screens.values():
-            s.place(relwidth=1, relheight=1)
 
         self.show("creatures")
 
@@ -1253,9 +1373,6 @@ class RPGApp:
         # Construir pantallas de nivel raíz
         self._screens["start"] = StartScreen(self.root, self)
         self._screens["main"]  = MainScreen(self.root, self)
-
-        for s in self._screens.values():
-            s.place(relwidth=1, relheight=1)
 
         self.show_screen("start")
 
