@@ -4,7 +4,10 @@ from GUIClaude import RPGApp
 
 class TestGUIInicio(unittest.TestCase):
     def setUp(self):
-        self.root = tk.Tk()
+        try:
+            self.root = tk.Tk()
+        except tk.TclError as exc:
+            raise unittest.SkipTest(f"Tk no disponible en entorno headless: {exc}")
         self.app = RPGApp(self.root)
         
     def tearDown(self):
