@@ -1,6 +1,17 @@
 """
-Esto es una prueba de GUI para el proyecto de POO hecha con Claude,
-por favor, no tomar en cuenta, gracias.
+GUIClaude.py
+============
+Interfaz gráfica del juego Chronicle of Shadows.
+Conectada al backend real a través de game_state_adapter.GameState.
+
+Correcciones aplicadas:
+  - Bug 1: Pociones curan criaturas debilitadas correctamente.
+  - Bug 2: Trampas redirigen al flujo de captura, no a equipar.
+  - Bug 3: Evolución muestra mensaje honesto (no implementada en backend).
+  - Bug 4: Compras en tienda persisten en el backend real (sync correcto).
+  - Bug 5: Accesorios comprados en tienda se agregan al backend antes de equipar.
+  - Bug 6: Explorar muestra diálogo de elección (Batallar / Capturar) y
+           agrega botón CAPTURAR durante el combate.
 """
 
 import tkinter as tk
@@ -137,18 +148,15 @@ class StartScreen(tk.Frame):
         self._build()
 
     def _build(self):
-        # Fondo con patrón de puntos simulado
         canvas = tk.Canvas(self, bg=C["bg_dark"], highlightthickness=0)
         canvas.place(relwidth=1, relheight=1)
         self._draw_bg(canvas)
 
-        # Contenedor central
         box = tk.Frame(self, bg=C["bg_panel"],
                        highlightbackground=C["border_gold"],
                        highlightthickness=1)
         box.place(relx=0.5, rely=0.5, anchor="center", width=520, height=620)
 
-        # Ornamento superior
         ornament = tk.Canvas(box, width=460, height=30,
                               bg=C["bg_panel"], highlightthickness=0)
         ornament.pack(pady=(18, 0))
@@ -163,7 +171,6 @@ class StartScreen(tk.Frame):
 
         SeparatorLine(box, padx=40).pack(fill="x", padx=40, pady=14)
 
-        # Formulario
         tk.Label(box, text="NOMBRE DEL AVENTURERO",
                  font=FONTS["btn_sm"], fg=C["text_dim"],
                  bg=C["bg_panel"]).pack()
@@ -187,23 +194,6 @@ class StartScreen(tk.Frame):
             state="readonly", justify="center", font=("Georgia", 12)
         )
         starter_combo.pack(ipady=6, padx=60, fill="x")
-
-        tk.Label(box, text="ORO INICIAL",
-                 font=FONTS["btn_sm"], fg=C["text_dim"],
-                 bg=C["bg_panel"]).pack(pady=(12, 2))
-
-        self.gold_var = tk.StringVar(value="200")
-        gold_entry = tk.Entry(box, textvariable=self.gold_var,
-                              font=("Georgia", 12), fg=C["text_bright"],
-                              bg=C["bg_card"], insertbackground=C["gold"],
-                              relief="flat", bd=0, justify="center")
-        gold_entry.pack(ipady=8, padx=60, fill="x")
-        tk.Frame(box, bg=C["border_gold"], height=1).pack(fill="x", padx=60)
-
-        entry.bind("<Return>", lambda _: self._start())
-
-        # Botón inicio
-        tk.Frame(box, bg=C["bg_panel"], height=20).pack()
 
         start_btn = tk.Button(
             box,
@@ -256,22 +246,28 @@ class StartScreen(tk.Frame):
 
     def _start(self):
         name = self.name_var.get().strip()
+
         if not name:
-            messagebox.showwarning("Nombre requerido",
-                                   "Debes ingresar el nombre de tu aventurero.")
+            messagebox.showwarning(
+                "Nombre requerido",
+                "Debes ingresar el nombre de tu aventurero."
+            )
             return
 
-        try:
-            oro_inicial = int(self.gold_var.get().strip())
-        except ValueError:
-            messagebox.showwarning("Oro inválido", "El oro inicial debe ser un número entero.")
-            return
+        # Hardcode del oro inicial
+        oro_inicial = 200
 
         criatura_inicial = self.starter_var.get().strip() or "Ignis"
 
         try:
-            self.app.state.crear_jugador(name, criatura_inicial=criatura_inicial, oro_inicial=oro_inicial)
+            self.app.state.crear_jugador(
+                name,
+                criatura_inicial=criatura_inicial,
+                oro_inicial=oro_inicial
+            )
+
             self.app.show_screen("main")
+
         except ValueError as e:
             messagebox.showerror("Error", str(e))
 
@@ -303,7 +299,6 @@ class SideNav(tk.Frame):
         self._build()
 
     def _build(self):
-        # Logo
         tk.Label(self, text="⚔", font=("Georgia", 22),
                  fg=C["gold"], bg=C["bg_panel"]).pack(pady=(18, 4))
         SeparatorLine(self).pack(fill="x", padx=8, pady=6)
@@ -320,9 +315,8 @@ class SideNav(tk.Frame):
             btn.pack(fill="x", padx=4, pady=2)
             self._buttons[key] = btn
 
-        # Espacio + info jugador abajo
         tk.Frame(self, bg=C["bg_panel"]).pack(expand=True)
-        
+
         save_btn = tk.Button(
             self, text="💾\nGuardar", command=self._save_game,
             bg=C["bg_panel"], fg=C["text_mid"],
@@ -366,18 +360,15 @@ class CreaturesScreen(tk.Frame):
         self._build()
 
     def _build(self):
-        # Header
         hdr = tk.Frame(self, bg=C["bg_panel"])
         hdr.pack(fill="x")
         tk.Label(hdr, text="  🐉  CRIATURAS CAPTURADAS",
                  font=FONTS["subtitle"], fg=C["gold"],
                  bg=C["bg_panel"]).pack(side="left", pady=12, padx=8)
 
-        # Layout: lista izq | detalle der
         body = tk.Frame(self, bg=C["bg_dark"])
         body.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Lista
         left = tk.Frame(body, bg=C["bg_panel"],
                          highlightbackground=C["border"],
                          highlightthickness=1)
@@ -389,7 +380,6 @@ class CreaturesScreen(tk.Frame):
         self.list_frame = tk.Frame(left, bg=C["bg_panel"])
         self.list_frame.pack(fill="both", expand=True, padx=6)
 
-        # Detalle
         self.detail_frame = tk.Frame(body, bg=C["bg_panel"],
                                       highlightbackground=C["border"],
                                       highlightthickness=1)
@@ -439,7 +429,6 @@ class CreaturesScreen(tk.Frame):
         bg = C["bg_panel"]
         c = creature
 
-        # Nombre + icono
         top = tk.Frame(self.detail_frame, bg=bg)
         top.pack(fill="x", padx=16, pady=(16, 4))
         tk.Label(top, text=c["icon"], font=("", 48),
@@ -458,7 +447,6 @@ class CreaturesScreen(tk.Frame):
 
         SeparatorLine(self.detail_frame).pack(fill="x", padx=16, pady=8)
 
-        # Barras HP / MP / XP
         bars = tk.Frame(self.detail_frame, bg=bg)
         bars.pack(fill="x", padx=20)
 
@@ -479,7 +467,6 @@ class CreaturesScreen(tk.Frame):
 
         SeparatorLine(self.detail_frame).pack(fill="x", padx=16, pady=8)
 
-        # Stats
         stats_frame = tk.Frame(self.detail_frame, bg=bg)
         stats_frame.pack(fill="x", padx=20)
         tk.Label(stats_frame, text="ESTADÍSTICAS BASE",
@@ -503,7 +490,6 @@ class CreaturesScreen(tk.Frame):
 
         SeparatorLine(self.detail_frame).pack(fill="x", padx=16, pady=8)
 
-        # Habilidades
         tk.Label(self.detail_frame, text="HABILIDADES",
                  font=FONTS["btn_sm"], fg=C["text_dim"],
                  bg=bg, anchor="w").pack(fill="x", padx=20)
@@ -519,7 +505,6 @@ class CreaturesScreen(tk.Frame):
             )
             sk_btn.pack(side="left", padx=4)
 
-        # Botones acción
         btn_row = tk.Frame(self.detail_frame, bg=bg)
         btn_row.pack(fill="x", padx=20, pady=12)
 
@@ -533,6 +518,7 @@ class CreaturesScreen(tk.Frame):
 
         make_btn(btn_row, "⚔ Enviar a Combate", C["gold"],
                  lambda: self._set_active(creature))
+        # Bug 3 fix: evolución no implementada en backend
         make_btn(btn_row, "✨ Evolucionar", C["purple_light"],
                  lambda: self._evolve(creature))
         make_btn(btn_row, "🔀 Cruzar", C["green_light"],
@@ -544,18 +530,14 @@ class CreaturesScreen(tk.Frame):
                              f"{creature['name']} está lista para el combate.")
 
     def _evolve(self, creature):
-        # BACKEND: self.app.backend.evolve_creature(creature)
-        cost = 500
-        if self.app.state.gold < cost:
-            messagebox.showwarning("Oro insuficiente",
-                                    f"Necesitas {cost}g para evolucionar.")
-            return
-        messagebox.showinfo("Evolución",
-                             f"La evolución de {creature['name']} requiere "
-                             f"Polvo Lunar × 2 y {cost}g.\n(Conecta tu backend aquí)")
+        # Bug 3 fix: mensaje honesto, sin mencionar polvo lunar inexistente
+        messagebox.showinfo(
+            "Evolución no disponible",
+            "El sistema de evolución aún no está implementado en el backend.\n"
+            "¡Próximamente en una futura entrega!"
+        )
 
     def _cross(self, creature):
-        # BACKEND: self.app.backend.cross_creatures(creature, other)
         messagebox.showinfo("Cruce de Criaturas",
                              "Selecciona una segunda criatura para cruzar.\n"
                              "(Conecta tu backend aquí)")
@@ -568,14 +550,6 @@ class CreaturesScreen(tk.Frame):
 #  PANTALLA: SISTEMA DE COMBATE
 # ══════════════════════════════════════════════════════════════
 class CombatScreen(tk.Frame):
-    ENEMY_POOL = [
-        {"name": "Wraithling",  "type": "Sombra", "hp": 80,  "max_hp": 80,
-         "atk": 18, "icon": "👻", "color": C["purple_light"], "status": None},
-        {"name": "Embervore",   "type": "Fuego",  "hp": 95,  "max_hp": 95,
-         "atk": 22, "icon": "🦎", "color": C["flame"],        "status": None},
-        {"name": "Glaciomaw",   "type": "Hielo",  "hp": 110, "max_hp": 110,
-         "atk": 16, "icon": "🐺", "color": C["frost"],        "status": None},
-    ]
 
     def __init__(self, parent, app):
         super().__init__(parent, bg=C["bg_dark"])
@@ -603,20 +577,16 @@ class CombatScreen(tk.Frame):
         body = tk.Frame(self, bg=C["bg_dark"])
         body.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Panel izquierdo: jugador vs enemigo
         arena = tk.Frame(body, bg=C["bg_panel"],
                           highlightbackground=C["border"], highlightthickness=1)
         arena.pack(side="left", fill="both", expand=True, padx=(0, 8))
 
-        # ── Jugador ──
         self.player_frame = tk.Frame(arena, bg=C["bg_panel"])
         self.player_frame.pack(fill="x", padx=12, pady=10)
 
-        # ── VS ──
         tk.Label(arena, text="⚔  VS  ⚔", font=("Georgia", 14, "bold"),
                  fg=C["border_gold"], bg=C["bg_panel"]).pack()
 
-        # ── Enemigo ──
         self.enemy_frame = tk.Frame(arena, bg=C["bg_panel"])
         self.enemy_frame.pack(fill="x", padx=12, pady=10)
 
@@ -628,19 +598,18 @@ class CombatScreen(tk.Frame):
 
         SeparatorLine(arena).pack(fill="x", padx=12, pady=6)
 
-        # Habilidades
         tk.Label(arena, text="HABILIDADES",
                  font=FONTS["btn_sm"], fg=C["text_dim"],
                  bg=C["bg_panel"]).pack(pady=(0, 4))
         self.skills_frame = tk.Frame(arena, bg=C["bg_panel"])
         self.skills_frame.pack(pady=(0, 10))
 
-        # Botones combate
         ctrl = tk.Frame(arena, bg=C["bg_panel"])
         ctrl.pack(pady=8)
 
+        # Bug 6 fix: botón renombrado a EXPLORAR para dejar claro el flujo
         self.start_btn = tk.Button(
-            ctrl, text="⚔ INICIAR COMBATE",
+            ctrl, text="🔍 EXPLORAR ZONA",
             command=self._start_combat,
             bg=C["red"], fg=C["text_bright"],
             activebackground=C["red_light"], activeforeground="white",
@@ -659,7 +628,17 @@ class CombatScreen(tk.Frame):
         )
         self.flee_btn.pack(side="left", padx=6)
 
-        # Panel derecho: log de combate
+        # Bug 6 fix: botón de captura durante combate
+        self.capture_btn = tk.Button(
+            ctrl, text="🪤 CAPTURAR",
+            command=self._capture_in_combat,
+            bg=C["bg_card"], fg=C["gold"],
+            activebackground=C["bg_hover"], activeforeground=C["gold_light"],
+            font=FONTS["btn"], relief="flat", bd=0, pady=10, padx=16,
+            cursor="hand2", state="disabled",
+        )
+        self.capture_btn.pack(side="left", padx=6)
+
         log_panel = tk.Frame(body, bg=C["bg_panel"],
                               highlightbackground=C["border"], highlightthickness=1,
                               width=280)
@@ -718,12 +697,12 @@ class CombatScreen(tk.Frame):
             enemy_hp = self.enemy["hp"]
         else:
             tk.Label(self.enemy_frame,
-                     text="Inicia el combate para\nencontrar un enemigo.",
+                     text="Explora la zona para\nencontrar un enemigo.",
                      font=FONTS["body"], fg=C["text_dim"],
                      bg=C["bg_panel"]).pack()
 
         self._update_battle_animation(player_hp, enemy_hp, c, self.enemy)
-        # Habilidades
+
         if c and self.combat_active:
             for skill in c.get("skills", []):
                 sk_btn = tk.Button(
@@ -774,18 +753,43 @@ class CombatScreen(tk.Frame):
                      font=FONTS["body_sm"], fg=C["text_mid"],
                      bg=bg, anchor="w").pack(fill="x")
 
+    # ── Bug 6 fix: flujo explorar → diálogo → batallar o capturar ───────────
     def _start_combat(self):
         if not self.app.state.active_creature:
             messagebox.showwarning("Sin criatura",
                                     "Selecciona una criatura activa primero.")
             return
         try:
-            # Explorar para generar encuentro
             msg = self.app.state.explorar()
             self._log(msg, "blue")
+
             if not self.app.state.hay_criatura_encontrada():
+                # Sin encuentro: dejar botón activo para reintentar
                 return
-            # Iniciar batalla
+
+            # Hay criatura: preguntar qué hacer
+            enemigo_info = self.app.state.criatura_enemiga_gui()
+            nombre_enemigo = enemigo_info["name"] if enemigo_info else "criatura salvaje"
+
+            accion = messagebox.askquestion(
+                "¡Encuentro!",
+                f"¡Apareció un {nombre_enemigo}!\n\n"
+                f"¿Deseas BATALLAR?\n"
+                f"Selecciona 'No' para intentar capturarlo con una Trampa Básica.",
+                icon="warning"
+            )
+
+            if accion == "yes":
+                self._iniciar_batalla_real()
+            else:
+                self._try_capture()
+
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+
+    def _iniciar_batalla_real(self):
+        """Inicia la batalla contra la criatura encontrada."""
+        try:
             msg_batalla = self.app.state.iniciar_batalla()
             self._log("═" * 30, "dim")
             self._log(msg_batalla, "red")
@@ -798,9 +802,41 @@ class CombatScreen(tk.Frame):
             self.last_enemy_hp = self.enemy["hp"] if self.enemy else None
             self.start_btn.config(state="disabled")
             self.flee_btn.config(state="normal")
+            self.capture_btn.config(state="normal")
             self._refresh_combatants()
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Error al iniciar batalla", str(e))
+
+    def _try_capture(self):
+        """Intenta capturar la criatura encontrada con una trampa del inventario."""
+        items_cap = self.app.state.items_captura_disponibles()
+        if not items_cap:
+            messagebox.showwarning(
+                "Sin trampas",
+                "No tienes ninguna Trampa Básica en el inventario.\n"
+                "Cómprala en la Tienda (80g) e inténtalo de nuevo."
+            )
+            # Limpiar criatura encontrada para no bloquear el juego
+            self.app.state.juego.criatura_encontrada = None
+            return
+        try:
+            msg = self.app.state.capturar(items_cap[0])
+            self._log(msg, "green")
+            self.app.state.sync()
+            messagebox.showinfo("¡Captura!", msg)
+        except Exception as e:
+            self._log(str(e), "red")
+            messagebox.showinfo("Captura fallida", str(e))
+
+    def _capture_in_combat(self):
+        """Intenta capturar al enemigo durante el combate (más chance con poco HP)."""
+        if not self.combat_active:
+            return
+        # La criatura ya está en batalla, capturar directamente
+        # Terminamos el combate después de intentar
+        self._try_capture()
+        self._end_combat(victory=None)
+    # ────────────────────────────────────────────────────────────────────────
 
     def _use_skill(self, skill_name):
         if not self.combat_active:
@@ -813,7 +849,6 @@ class CombatScreen(tk.Frame):
                       else "green" if "subió" in evento.lower() \
                       else ""
                 self._log(evento, tag)
-            # Actualizar enemigo desde backend
             self.enemy = self.app.state.criatura_enemiga_gui()
             estado = resultado["estado"]
             if estado == "VICTORIA":
@@ -840,8 +875,20 @@ class CombatScreen(tk.Frame):
         self.enemy = None
         self.start_btn.config(state="normal")
         self.flee_btn.config(state="disabled")
+        self.capture_btn.config(state="disabled")
         self.last_player_hp = None
         self.last_enemy_hp = None
+
+        # Bug 2 fix: limpiar estado del backend para que explorar() no vea batalla activa
+        try:
+            juego = self.app.state.juego
+            if juego.batalla_activa is not None:
+                juego.batalla_activa = None
+            if juego.criatura_encontrada is not None:
+                juego.criatura_encontrada = None
+        except Exception:
+            pass
+
         if victory is True:
             self._log("═" * 30, "dim")
         self._refresh_combatants()
@@ -925,7 +972,6 @@ class InventoryScreen(tk.Frame):
                  font=FONTS["subtitle"], fg=C["gold"],
                  bg=C["bg_panel"]).pack(side="left", pady=12, padx=8)
 
-        # Filtros
         filt_frame = tk.Frame(hdr, bg=C["bg_panel"])
         filt_frame.pack(side="right", padx=12, pady=10)
         for f in self.FILTERS:
@@ -943,7 +989,6 @@ class InventoryScreen(tk.Frame):
         body = tk.Frame(self, bg=C["bg_dark"])
         body.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Grilla de ítems
         grid_outer = tk.Frame(body, bg=C["bg_panel"],
                                highlightbackground=C["border"], highlightthickness=1)
         grid_outer.pack(side="left", fill="both", expand=True, padx=(0, 8))
@@ -961,7 +1006,6 @@ class InventoryScreen(tk.Frame):
         scrollbar.pack(side="right", fill="y")
         canvas.pack(side="left", fill="both", expand=True)
 
-        # Panel detalle
         self.detail_panel = tk.Frame(body, bg=C["bg_panel"],
                                       highlightbackground=C["border"],
                                       highlightthickness=1, width=240)
@@ -1048,28 +1092,88 @@ class InventoryScreen(tk.Frame):
         )
         discard_btn.pack(fill="x", padx=20)
 
+    # ── Bug 1, 2, 5 fix: lógica de uso diferenciada por tipo de ítem ────────
     def _use_item(self, item):
         if item["qty"] <= 0:
             messagebox.showwarning("Sin existencias", "No tienes más de este ítem.")
             return
+
+        nombre_backend = item.get("_backend_nombre", item["name"])
+
+        # Bug 2 fix: Trampas → redirigir a Combate
+        if "trampa" in nombre_backend.lower() or nombre_backend == "Trampa Básica":
+            messagebox.showinfo(
+                "Trampa Básica",
+                "Las trampas se usan durante la exploración en la pantalla de Combate.\n\n"
+                "Ve a ⚔ Combate → 🔍 Explorar Zona → elige 'No' cuando aparezca una criatura."
+            )
+            return
+
+        # Bug 1 fix: Pociones → curan HP directamente, incluso en criatura debilitada
+        if nombre_backend in ("Poción", "Pocion"):
+            jugador = self.app.state.juego.jugador
+            # Intentar aplicar a criatura activa primero, si no a la primera del equipo
+            criatura_gui = self.app.state.active_creature
+            if criatura_gui:
+                nombre_c = criatura_gui["_backend_nombre"]
+                criatura_backend = next(
+                    (c for c in jugador.equipo if c.nombre == nombre_c), None
+                )
+            else:
+                criatura_backend = jugador.equipo[0] if jugador.equipo else None
+
+            if criatura_backend is None:
+                messagebox.showwarning("Sin criaturas", "No tienes criaturas en el equipo.")
+                return
+
+            try:
+                jugador.consumir_item(nombre_backend)
+                hp_antes = criatura_backend.hp
+                criatura_backend.hp = min(
+                    criatura_backend.hp + 30,
+                    criatura_backend.hp_max
+                )
+                # Si estaba debilitada y ahora tiene HP, quitar estado
+                curado = criatura_backend.hp - hp_antes
+                self.app.state.sync()
+                messagebox.showinfo(
+                    "Poción usada",
+                    f"✦ {criatura_backend.nombre} recuperó {curado} HP.\n"
+                    f"HP actual: {criatura_backend.hp}/{criatura_backend.hp_max}"
+                )
+                self._refresh()
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+            return
+
+        # Bug 5 fix: Accesorios → equipar a criatura activa (ya están en backend via tienda)
         criatura = self.app.state.active_creature
         if not criatura:
-            messagebox.showwarning("Sin criatura", "Selecciona una criatura activa primero.")
+            messagebox.showwarning("Sin criatura activa",
+                                   "Ve a Criaturas y marca una como activa primero.")
             return
         try:
             msg = self.app.state.equipar_item(
-                criatura["_backend_nombre"], item["_backend_nombre"]
+                criatura["_backend_nombre"], nombre_backend
             )
             self.app.state.sync()
             messagebox.showinfo("Ítem equipado", msg)
             self._refresh()
         except Exception as e:
             messagebox.showerror("Error", str(e))
+    # ────────────────────────────────────────────────────────────────────────
 
     def _discard_item(self, item):
         if messagebox.askyesno("Descartar", f"¿Descartar {item['name']}?"):
-            # BACKEND: self.app.backend.discard_item(item)
-            self.app.state.inventory.remove(item)
+            try:
+                nombre_backend = item.get("_backend_nombre", item["name"])
+                jugador = self.app.state.juego.jugador
+                jugador.consumir_item(nombre_backend)
+                self.app.state.sync()
+            except Exception:
+                # Si falla el backend, quitar solo de la GUI
+                if item in self.app.state.inventory:
+                    self.app.state.inventory.remove(item)
             for w in self.detail_panel.winfo_children():
                 w.destroy()
             tk.Label(self.detail_panel, text="Selecciona un ítem",
@@ -1108,38 +1212,37 @@ class MapScreen(tk.Frame):
         body = tk.Frame(self, bg=C["bg_dark"])
         body.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Panel izquierdo: Info y controles de movimiento
         left = tk.Frame(body, bg=C["bg_panel"],
                          highlightbackground=C["border"], highlightthickness=1)
         left.pack(side="left", fill="y", padx=(0, 8))
 
         tk.Label(left, text="ZONA ACTUAL", font=FONTS["btn_sm"],
                  fg=C["text_dim"], bg=C["bg_panel"]).pack(pady=(12, 4))
-                 
+
         self.zone_name = tk.Label(left, text="---", font=FONTS["heading"],
                                   fg=C["text_bright"], bg=C["bg_panel"])
         self.zone_name.pack()
-        
+
         self.zone_desc = tk.Label(left, text="---", font=FONTS["lore"],
-                                  fg=C["text_mid"], bg=C["bg_panel"], wraplength=220, justify="center")
+                                  fg=C["text_mid"], bg=C["bg_panel"],
+                                  wraplength=220, justify="center")
         self.zone_desc.pack(pady=8, padx=12)
-        
+
         SeparatorLine(left).pack(fill="x", padx=16, pady=8)
 
         tk.Label(left, text="MOVERSE A:", font=FONTS["btn_sm"],
                  fg=C["text_dim"], bg=C["bg_panel"]).pack(pady=4)
 
         self.btn_norte = self._make_move_btn(left, "Norte")
-        
+
         mid_row = tk.Frame(left, bg=C["bg_panel"])
         mid_row.pack()
         self.btn_oeste = self._make_move_btn(mid_row, "Oeste", side="left")
-        tk.Frame(mid_row, bg=C["bg_panel"], width=20).pack(side="left") # Espacio
+        tk.Frame(mid_row, bg=C["bg_panel"], width=20).pack(side="left")
         self.btn_este = self._make_move_btn(mid_row, "Este", side="left")
-        
+
         self.btn_sur = self._make_move_btn(left, "Sur")
 
-        # Panel derecho: Minimapa
         right = tk.Frame(body, bg=C["bg_panel"],
                           highlightbackground=C["border"], highlightthickness=1)
         right.pack(side="left", fill="both", expand=True)
@@ -1148,7 +1251,8 @@ class MapScreen(tk.Frame):
                  fg=C["text_dim"], bg=C["bg_panel"]).pack(pady=12)
 
         self.minimap_canvas = tk.Canvas(
-            right, bg=C["bg_dark"], height=420, relief="flat", bd=0, highlightthickness=0
+            right, bg=C["bg_dark"], height=420, relief="flat",
+            bd=0, highlightthickness=0
         )
         self.minimap_canvas.pack(fill="both", expand=True, padx=16, pady=(0, 16))
 
@@ -1171,18 +1275,24 @@ class MapScreen(tk.Frame):
         try:
             zona = self.app.state.info_zona_actual()
             self.zone_name.config(text=zona["nombre"])
-            self.zone_desc.config(text=zona["descripcion"])
-            
+            # Bug fix: usar clima_base si no existe "descripcion"
+            self.zone_desc.config(
+                text=zona.get("descripcion", zona.get("clima_base", ""))
+            )
+
             conexiones = self.app.state.obtener_conexiones()
             self.btn_norte.config(state="normal" if "norte" in conexiones else "disabled")
             self.btn_sur.config(state="normal" if "sur" in conexiones else "disabled")
             self.btn_este.config(state="normal" if "este" in conexiones else "disabled")
             self.btn_oeste.config(state="normal" if "oeste" in conexiones else "disabled")
-            
+
             mapa_info = self.app.state.mapa_mundo()
-            self._draw_map_canvas(mapa_info, zona["nombre"])
-        except Exception:
-            pass
+            # Diferir dibujo hasta que el canvas tenga tamaño real
+            self.minimap_canvas.after(
+                10, lambda: self._draw_map_canvas(mapa_info, zona["nombre"])
+            )
+        except Exception as e:
+            print(f"[MapScreen.refresh error] {e}")
 
     def _build_zone_layout(self, mapa_info, zona_actual):
         if not mapa_info:
@@ -1219,9 +1329,17 @@ class MapScreen(tk.Frame):
         self.zone_nodes = {}
         if not mapa_info:
             return
+
+        # Forzar actualización de tamaño antes de dibujar
+        self.minimap_canvas.update_idletasks()
+        canvas_w = self.minimap_canvas.winfo_width()
+        canvas_h = self.minimap_canvas.winfo_height()
+
         self.zone_layout = self._build_zone_layout(mapa_info, zona_actual)
         scale = 180
-        offset_x, offset_y = 230, 220
+        # Offset centrado dinámicamente
+        offset_x = canvas_w // 2
+        offset_y = canvas_h // 2
         box_w, box_h = 160, 84
 
         for origen, datos in mapa_info.items():
@@ -1232,7 +1350,9 @@ class MapScreen(tk.Frame):
                 x2, y2 = self.zone_layout.get(destino, (0, 0))
                 cx2 = offset_x + x2 * scale
                 cy2 = offset_y + y2 * scale
-                self.minimap_canvas.create_line(cx1, cy1, cx2, cy2, fill=C["border_gold"], width=2)
+                self.minimap_canvas.create_line(
+                    cx1, cy1, cx2, cy2, fill=C["border_gold"], width=2
+                )
 
         for nombre, datos in mapa_info.items():
             x, y = self.zone_layout.get(nombre, (0, 0))
@@ -1244,16 +1364,24 @@ class MapScreen(tk.Frame):
             fill = C["red"] if activo else C["bg_card"]
             outline = C["gold"] if activo else C["border"]
             rect = self.minimap_canvas.create_rectangle(
-                x1, y1, x2, y2, fill=fill, outline=outline, width=3 if activo else 1
+                x1, y1, x2, y2, fill=fill, outline=outline,
+                width=3 if activo else 1
             )
             criaturas = ", ".join(datos["criaturas_salvajes"]) or "Sin criaturas"
             text = f"{nombre}\n🌦 {datos['clima_base']}\n🐾 {criaturas}"
             txt = self.minimap_canvas.create_text(
-                cx, cy, text=text, fill=C["text_bright"], font=FONTS["body_sm"], justify="center"
+                cx, cy, text=text, fill=C["text_bright"],
+                font=FONTS["body_sm"], justify="center"
             )
             self.zone_nodes[nombre] = (rect, txt)
-            self.minimap_canvas.tag_bind(rect, "<Button-1>", lambda _, z=nombre: self._move_to_zone(z, zona_actual))
-            self.minimap_canvas.tag_bind(txt, "<Button-1>", lambda _, z=nombre: self._move_to_zone(z, zona_actual))
+            self.minimap_canvas.tag_bind(
+                rect, "<Button-1>",
+                lambda _, z=nombre: self._move_to_zone(z, zona_actual)
+            )
+            self.minimap_canvas.tag_bind(
+                txt, "<Button-1>",
+                lambda _, z=nombre: self._move_to_zone(z, zona_actual)
+            )
 
 
 # ══════════════════════════════════════════════════════════════
@@ -1281,7 +1409,6 @@ class ShopScreen(tk.Frame):
         body = tk.Frame(self, bg=C["bg_dark"])
         body.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Lista de tienda
         shop_panel = tk.Frame(body, bg=C["bg_panel"],
                                highlightbackground=C["border"], highlightthickness=1)
         shop_panel.pack(side="left", fill="both", expand=True, padx=(0, 8))
@@ -1296,7 +1423,6 @@ class ShopScreen(tk.Frame):
         for item in GameState.SHOP_ITEMS:
             self._make_shop_row(item)
 
-        # Carrito / detalle
         right = tk.Frame(body, bg=C["bg_panel"],
                           highlightbackground=C["border"], highlightthickness=1,
                           width=260)
@@ -1309,7 +1435,7 @@ class ShopScreen(tk.Frame):
 
         self.cart_frame = tk.Frame(right, bg=C["bg_panel"])
         self.cart_frame.pack(fill="both", expand=True, padx=10, pady=8)
-        self.cart = {}  # {item_name: qty}
+        self.cart = {}
 
         tk.Label(right, text="Total:", font=FONTS["body"],
                  fg=C["text_mid"], bg=C["bg_panel"]).pack()
@@ -1399,6 +1525,7 @@ class ShopScreen(tk.Frame):
             self.cart[name]["qty"] -= 1
         self._refresh_cart()
 
+    # ── Bug 4 y 5 fix: compras se agregan al backend real ───────────────────
     def _checkout(self):
         total = sum(e["item"]["price"] * e["qty"]
                     for e in self.cart.values() if e["qty"] > 0)
@@ -1411,28 +1538,41 @@ class ShopScreen(tk.Frame):
                                     f"{self.app.state.gold}g.")
             return
 
-        # BACKEND: self.app.backend.purchase(self.cart)
-        self.app.state.gold -= total
+        from game_state import CATALOGO_ITEMS, _crear_item
+
+        jugador = self.app.state.juego.jugador
+        items_no_catalogo = []
+
         for entry in self.cart.values():
             if entry["qty"] == 0:
                 continue
-            item_data = entry["item"]
-            # Añadir a inventario
-            existing = next(
-                (i for i in self.app.state.inventory
-                 if i["name"] == item_data["name"]), None)
-            if existing:
-                existing["qty"] += entry["qty"]
+            nombre = entry["item"]["name"]
+            if nombre in CATALOGO_ITEMS:
+                # Bug 4 y 5 fix: agregar al backend real, no solo a la GUI
+                for _ in range(entry["qty"]):
+                    jugador.agregar_item(_crear_item(nombre))
             else:
-                self.app.state.inventory.append({
-                    **item_data, "qty": entry["qty"]
-                })
+                items_no_catalogo.append(nombre)
+
+        if items_no_catalogo:
+            messagebox.showwarning(
+                "Ítems no disponibles",
+                f"Estos ítems no existen en el catálogo del juego y no se compraron:\n"
+                + "\n".join(f"  • {n}" for n in items_no_catalogo)
+            )
+
+        # Descontar oro en el backend
+        jugador.oro -= total
 
         self.cart.clear()
         self._refresh_cart()
+
+        # sync reconstruye GUI desde el backend real → qty siempre correcto
+        self.app.state.sync()
         self.gold_label.config(text=f"💰 {self.app.state.gold}g")
         self.app.sidenav.refresh_gold(self.app.state.gold)
         messagebox.showinfo("Compra exitosa", f"Compra realizada. -{total}g")
+    # ────────────────────────────────────────────────────────────────────────
 
     def refresh(self):
         self.gold_label.config(text=f"💰 {self.app.state.gold}g")
@@ -1494,12 +1634,11 @@ class RPGApp:
         self._style_ttk()
 
         self.state = GameState()
-        self.sidenav = None  # Se asigna en MainScreen
+        self.sidenav = None
 
         self._screens = {}
         self._active = None
 
-        # Construir pantallas de nivel raíz
         self._screens["start"] = StartScreen(self.root, self)
         self._screens["main"]  = MainScreen(self.root, self)
 
