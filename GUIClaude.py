@@ -146,7 +146,7 @@ class StartScreen(tk.Frame):
         box = tk.Frame(self, bg=C["bg_panel"],
                        highlightbackground=C["border_gold"],
                        highlightthickness=1)
-        box.place(relx=0.5, rely=0.5, anchor="center", width=480, height=520)
+        box.place(relx=0.5, rely=0.5, anchor="center", width=520, height=620)
 
         # Ornamento superior
         ornament = tk.Canvas(box, width=460, height=30,
@@ -176,6 +176,30 @@ class StartScreen(tk.Frame):
         entry.pack(ipady=10, padx=60, fill="x", pady=(6, 0))
         tk.Frame(box, bg=C["border_gold"], height=1).pack(fill="x", padx=60)
 
+        tk.Label(box, text="CRIATURA INICIAL",
+                 font=FONTS["btn_sm"], fg=C["text_dim"],
+                 bg=C["bg_panel"]).pack(pady=(14, 2))
+
+        self.starter_var = tk.StringVar(value="Ignis")
+        starter_combo = ttk.Combobox(
+            box, textvariable=self.starter_var,
+            values=["Ignis", "Torrente", "Rocafer"],
+            state="readonly", justify="center", font=("Georgia", 12)
+        )
+        starter_combo.pack(ipady=6, padx=60, fill="x")
+
+        tk.Label(box, text="ORO INICIAL",
+                 font=FONTS["btn_sm"], fg=C["text_dim"],
+                 bg=C["bg_panel"]).pack(pady=(12, 2))
+
+        self.gold_var = tk.StringVar(value="200")
+        gold_entry = tk.Entry(box, textvariable=self.gold_var,
+                              font=("Georgia", 12), fg=C["text_bright"],
+                              bg=C["bg_card"], insertbackground=C["gold"],
+                              relief="flat", bd=0, justify="center")
+        gold_entry.pack(ipady=8, padx=60, fill="x")
+        tk.Frame(box, bg=C["border_gold"], height=1).pack(fill="x", padx=60)
+
         entry.bind("<Return>", lambda _: self._start())
 
         # Botón inicio
@@ -191,6 +215,17 @@ class StartScreen(tk.Frame):
             pady=14, cursor="hand2",
         )
         start_btn.pack(padx=50, fill="x")
+
+        load_btn = tk.Button(
+            box,
+            text="⟲   CARGAR PARTIDA   ⟲",
+            command=self._load_game,
+            bg=C["bg_card"], fg=C["gold"],
+            activebackground=C["bg_hover"], activeforeground=C["gold_light"],
+            font=("Georgia", 11, "bold"), relief="flat", bd=0,
+            pady=10, cursor="hand2",
+        )
+        load_btn.pack(padx=50, fill="x", pady=(8, 0))
 
         SeparatorLine(box, padx=40).pack(fill="x", padx=40, pady=16)
 
@@ -225,11 +260,27 @@ class StartScreen(tk.Frame):
             messagebox.showwarning("Nombre requerido",
                                    "Debes ingresar el nombre de tu aventurero.")
             return
+
         try:
-            msg = self.app.state.crear_jugador(name)
+            oro_inicial = int(self.gold_var.get().strip())
+        except ValueError:
+            messagebox.showwarning("Oro inválido", "El oro inicial debe ser un número entero.")
+            return
+
+        criatura_inicial = self.starter_var.get().strip() or "Ignis"
+
+        try:
+            self.app.state.crear_jugador(name, criatura_inicial=criatura_inicial, oro_inicial=oro_inicial)
             self.app.show_screen("main")
         except ValueError as e:
             messagebox.showerror("Error", str(e))
+
+    def _load_game(self):
+        try:
+            self.app.state.cargar_partida()
+            self.app.show_screen("main")
+        except Exception as e:
+            messagebox.showerror("No se pudo cargar", str(e))
 
 
 # ══════════════════════════════════════════════════════════════
