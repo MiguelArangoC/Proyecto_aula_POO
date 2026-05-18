@@ -55,7 +55,7 @@ FONTS = {
 }
 
 
-from game_state import GameState
+from game_state_adapter import GameState
 
 
 # ══════════════════════════════════════════════════════════════
@@ -225,10 +225,11 @@ class StartScreen(tk.Frame):
             messagebox.showwarning("Nombre requerido",
                                    "Debes ingresar el nombre de tu aventurero.")
             return
-        # BACKEND: llama aquí a tu método de creación de jugador
-        # Ejemplo: self.app.backend.create_player(name)
-        self.app.state.player_name = name
-        self.app.show_screen("main")
+        try:
+            msg = self.app.state.crear_jugador(name)
+            self.app.show_screen("main")
+        except ValueError as e:
+            messagebox.showerror("Error", str(e))
 
 
 # ══════════════════════════════════════════════════════════════
@@ -470,8 +471,7 @@ class CreaturesScreen(tk.Frame):
                  lambda: self._cross(creature))
 
     def _set_active(self, creature):
-        # BACKEND: self.app.backend.set_active_creature(creature)
-        self.app.state.active_creature = creature
+        self.app.state.set_active_creature(creature)
         messagebox.showinfo("Criatura activa",
                              f"{creature['name']} está lista para el combate.")
 
@@ -703,61 +703,57 @@ class CombatScreen(tk.Frame):
             messagebox.showwarning("Sin criatura",
                                     "Selecciona una criatura activa primero.")
             return
-        # BACKEND: self.enemy = self.app.backend.get_new_enemy()
-        self.enemy = dict(random.choice(self.ENEMY_POOL))
-        self.enemy["hp"] = self.enemy["max_hp"]
-        self.combat_active = True
-        self.start_btn.config(state="disabled")
-        self.flee_btn.config(state="normal")
-        self._log("═" * 30, "dim")
-        self._log(f"¡{self.enemy['name']} aparece!", "red")
-        self._log(f"Ambiente: {self.environment}", "blue")
-        self._refresh_combatants()
+        try:
+            # Explorar para generar encuentro
+            msg = self.app.state.explorar()
+            self._log(msg, "blue")
+            if not self.app.state.hay_criatura_encontrada():
+                return
+            # Iniciar batalla
+            msg_batalla = self.app.state.iniciar_batalla()
+            self._log("═" * 30, "dim")
+            self._log(msg_batalla, "red")
+            clima = self.app.state.clima_batalla_actual()
+            self._log(f"Clima: {clima}", "blue")
+            self.enemy = self.app.state.criatura_enemiga_gui()
+            self.combat_active = True
+            self.start_btn.config(state="disabled")
+            self.flee_btn.config(state="normal")
+            self._refresh_combatants()
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
 
     def _use_skill(self, skill_name):
-        if not self.combat_active or not self.enemy:
+        if not self.combat_active:
             return
-
-        c = self.app.state.active_creature
-        # BACKEND: result = self.app.backend.execute_turn(c, skill_name, self.enemy, self.environment)
-        # Demo logic — reemplaza con tu motor de combate
-        base_dmg = c["atk"] + random.randint(-5, 10)
-        env_mod = 1.0
-        if "Tormenta" in self.environment and c["type"] == "Fuego":
-            env_mod = 0.7
-        if "Volcánico" in self.environment and c["type"] == "Fuego":
-            env_mod = 1.4
-        if "Nevado" in self.environment and c["type"] == "Hielo":
-            env_mod = 1.3
-        dmg = max(1, int(base_dmg * env_mod))
-
-        self.enemy["hp"] = max(0, self.enemy["hp"] - dmg)
-        self._log(f"► {c['name']} usa {skill_name}!", "gold")
-        self._log(f"  Daño: {dmg} (mod. ambiente: ×{env_mod:.1f})", "red")
-
-        if self.enemy["hp"] <= 0:
-            self._log(f"✓ ¡{self.enemy['name']} derrotado!", "green")
-            reward = random.randint(30, 80)
-            self.app.state.gold += reward
-            self._log(f"  Recompensa: +{reward}g", "gold")
-            self.app.sidenav.refresh_gold(self.app.state.gold)
-            self._end_combat(victory=True)
-            return
-
-        # Turno enemigo
-        enemy_dmg = max(1, self.enemy["atk"] + random.randint(-3, 8))
-        c["hp"] = max(0, c["hp"] - enemy_dmg)
-        self._log(f"◄ {self.enemy['name']} contraataca: {enemy_dmg} daño", "red")
-
-        if c["hp"] <= 0:
-            self._log(f"✗ {c['name']} ha sido derrotado...", "dim")
-            self._end_combat(victory=False)
-            return
-
-        self._refresh_combatants()
+        try:
+            resultado = self.app.state.ejecutar_turno()
+            for evento in resultado["log"]:
+                tag = "gold" if "Victoria" in evento or "XP" in evento \
+                      else "red" if "daño" in evento.lower() or "falló" in evento.lower() \
+                      else "green" if "subió" in evento.lower() \
+                      else ""
+                self._log(evento, tag)
+            # Actualizar enemigo desde backend
+            self.enemy = self.app.state.criatura_enemiga_gui()
+            estado = resultado["estado"]
+            if estado == "VICTORIA":
+                self._log("═" * 30, "dim")
+                self._end_combat(victory=True)
+            elif estado == "DERROTA":
+                self._log("═" * 30, "dim")
+                self._end_combat(victory=False)
+            else:
+                self._refresh_combatants()
+        except Exception as e:
+            messagebox.showerror("Error en combate", str(e))
 
     def _flee(self):
-        self._log("Has huido del combate.", "dim")
+        try:
+            msg = self.app.state.retirarse()
+            self._log(msg, "dim")
+        except Exception:
+            self._log("Has huido del combate.", "dim")
         self._end_combat(victory=None)
 
     def _end_combat(self, victory):
@@ -929,11 +925,19 @@ class InventoryScreen(tk.Frame):
         if item["qty"] <= 0:
             messagebox.showwarning("Sin existencias", "No tienes más de este ítem.")
             return
-        # BACKEND: self.app.backend.use_item(item, self.app.state.active_creature)
-        item["qty"] -= 1
-        messagebox.showinfo("Ítem usado",
-                             f"Usaste {item['name']}.\n(Conecta tu backend para aplicar el efecto)")
-        self._refresh()
+        criatura = self.app.state.active_creature
+        if not criatura:
+            messagebox.showwarning("Sin criatura", "Selecciona una criatura activa primero.")
+            return
+        try:
+            msg = self.app.state.equipar_item(
+                criatura["_backend_nombre"], item["_backend_nombre"]
+            )
+            self.app.state.sync()
+            messagebox.showinfo("Ítem equipado", msg)
+            self._refresh()
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
 
     def _discard_item(self, item):
         if messagebox.askyesno("Descartar", f"¿Descartar {item['name']}?"):
