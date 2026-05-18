@@ -155,6 +155,8 @@ class GameStateAdapter:
         if self.juego.jugador is None:
             return
 
+        self.gold = self.juego.jugador.oro
+
         # Criaturas
         self.creatures = [_criatura_a_gui(c) for c in self.juego.estado_equipo()]
 
@@ -182,9 +184,9 @@ class GameStateAdapter:
 
     # ── Acciones del jugador ─────────────────────────────────────────────────
 
-    def crear_jugador(self, nombre: str) -> str:
+    def crear_jugador(self, nombre: str, criatura_inicial: str = "Ignis", oro_inicial: int = 200) -> str:
         """Crea el jugador y sincroniza el estado inicial."""
-        msg = self.juego.crear_jugador(nombre)
+        msg = self.juego.crear_jugador(nombre, criatura_inicial=criatura_inicial, oro_inicial=oro_inicial)
         self.player_name = nombre
         self.sync()
         return msg
@@ -300,6 +302,10 @@ class GameStateAdapter:
     def set_active_creature(self, creature_gui: dict) -> None:
         """Marca como criatura activa la indicada por dict GUI."""
         self.active_creature = creature_gui
+
+
+    def mini_mapa(self) -> str:
+        return self.juego.mini_mapa()
 
 
 # Alias para que la GUI sólo cambie el import
