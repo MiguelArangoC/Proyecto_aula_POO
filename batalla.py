@@ -100,6 +100,21 @@ class Batalla:
         return True, dano_final, mult_tipo
 
     def ejecutar_turno(self, usar_item: bool = False, nombre_item: str = "") -> EstadoBatalla:
+        """
+        Ejecuta un turno de combate completo: aplica daño climático, gestiona
+        el uso de ítem si se solicita, y resuelve los ataques por velocidad.
+
+        Parámetros:
+            usar_item (bool): Si True, equipa el ítem indicado antes de atacar.
+            nombre_item (str): Nombre del ítem a equipar (requerido si usar_item=True).
+
+        Retorna:
+            EstadoBatalla: El estado resultante tras el turno.
+
+        Lanza:
+            RuntimeError: Si la batalla ya terminó.
+            ItemNoDisponibleError: Si usar_item=True pero nombre_item está vacío.
+        """
         if self.estado != EstadoBatalla.EN_CURSO:
             raise RuntimeError("La batalla ya ha terminado.")
 
@@ -168,6 +183,12 @@ class Batalla:
         return self.estado
 
     def retirarse(self) -> EstadoBatalla:
+        """
+        El jugador abandona voluntariamente la batalla.
+
+        Retorna:
+            EstadoBatalla: RETIRADA.
+        """
         self.estado = EstadoBatalla.RETIRADA
         self._registrar(f"{self.jugador.nombre} se retiró de la batalla.")
         return self.estado
@@ -197,6 +218,12 @@ class Batalla:
     # ─────────────────────────────────────────
 
     def resumen(self) -> str:
+        """
+        Genera un texto con el estado actual de la batalla.
+
+        Retorna:
+            str: Resumen legible del estado, turno, HP de ambas criaturas y clima.
+        """
         criatura_jugador = self.jugador.criatura_activa()
         nombre_j, hp_j = (criatura_jugador.nombre, criatura_jugador.hp) if criatura_jugador else ("Ninguna", 0)
 
