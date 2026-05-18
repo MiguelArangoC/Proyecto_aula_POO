@@ -585,6 +585,8 @@ class CombatScreen(tk.Frame):
         self.environment = "☀ Normal"
         self.log_lines = []
         self.combat_active = False
+        self.last_player_hp = None
+        self.last_enemy_hp = None
         self._build()
 
     def _build(self):
@@ -626,6 +628,12 @@ class CombatScreen(tk.Frame):
         # ── Enemigo ──
         self.enemy_frame = tk.Frame(arena, bg=C["bg_panel"])
         self.enemy_frame.pack(fill="x", padx=12, pady=10)
+
+        self.battle_canvas = tk.Canvas(
+            arena, height=170, bg=C["bg_dark"], highlightthickness=1,
+            highlightbackground=C["border"]
+        )
+        self.battle_canvas.pack(fill="x", padx=12, pady=(0, 10))
 
         SeparatorLine(arena).pack(fill="x", padx=12, pady=6)
 
@@ -684,6 +692,7 @@ class CombatScreen(tk.Frame):
         self.log_text.tag_config("dim",   foreground=C["text_dim"])
 
         self._refresh_combatants()
+        self._render_battle_canvas("Esperando combate...")
 
     def _change_env(self, env):
         self.environment = env
@@ -699,8 +708,11 @@ class CombatScreen(tk.Frame):
             w.destroy()
 
         c = self.app.state.active_creature
+        player_hp = None
+        enemy_hp = None
         if c:
             self._combatant_widget(self.player_frame, c, is_player=True)
+            player_hp = c["hp"]
         else:
             tk.Label(self.player_frame,
                      text="Sin criatura activa.\nVe a Criaturas y selecciona una.",
@@ -709,12 +721,14 @@ class CombatScreen(tk.Frame):
 
         if self.enemy:
             self._combatant_widget(self.enemy_frame, self.enemy, is_player=False)
+            enemy_hp = self.enemy["hp"]
         else:
             tk.Label(self.enemy_frame,
                      text="Inicia el combate para\nencontrar un enemigo.",
                      font=FONTS["body"], fg=C["text_dim"],
                      bg=C["bg_panel"]).pack()
 
+        self._update_battle_animation(player_hp, enemy_hp, c, self.enemy)
         # Habilidades
         if c and self.combat_active:
             for skill in c.get("skills", []):
@@ -785,6 +799,8 @@ class CombatScreen(tk.Frame):
             self._log(f"Clima: {clima}", "blue")
             self.enemy = self.app.state.criatura_enemiga_gui()
             self.combat_active = True
+            self.last_player_hp = self.app.state.active_creature["hp"]
+            self.last_enemy_hp = self.enemy["hp"] if self.enemy else None
             self.start_btn.config(state="disabled")
             self.flee_btn.config(state="normal")
             self._refresh_combatants()
@@ -829,9 +845,57 @@ class CombatScreen(tk.Frame):
         self.enemy = None
         self.start_btn.config(state="normal")
         self.flee_btn.config(state="disabled")
+        self.last_player_hp = None
+        self.last_enemy_hp = None
         if victory is True:
             self._log("═" * 30, "dim")
         self._refresh_combatants()
+        self._render_battle_canvas("Combate finalizado")
+
+    def _update_battle_animation(self, player_hp, enemy_hp, player_data, enemy_data):
+        event = None
+        if self.last_player_hp is not None and player_hp is not None and player_hp < self.last_player_hp:
+            event = "enemy_hit"
+        if self.last_enemy_hp is not None and enemy_hp is not None and enemy_hp < self.last_enemy_hp:
+            event = "player_hit"
+        if player_hp == 0 and player_hp is not None:
+            event = "player_down"
+        if enemy_hp == 0 and enemy_hp is not None:
+            event = "enemy_down"
+        self._render_battle_canvas(event=event, player_data=player_data, enemy_data=enemy_data)
+        self.last_player_hp = player_hp
+        self.last_enemy_hp = enemy_hp
+
+    def _render_battle_canvas(self, message=None, event=None, player_data=None, enemy_data=None):
+        self.battle_canvas.delete("all")
+        w = self.battle_canvas.winfo_width() or 560
+        h = self.battle_canvas.winfo_height() or 170
+        self.battle_canvas.create_rectangle(0, 0, w, h, fill=C["bg_dark"], outline="")
+        self.battle_canvas.create_text(w * 0.22, h * 0.25, text="Jugador", fill=C["text_dim"], font=FONTS["body_sm"])
+        self.battle_canvas.create_text(w * 0.78, h * 0.25, text="Enemigo", fill=C["text_dim"], font=FONTS["body_sm"])
+        p_icon = player_data["icon"] if player_data else "?"
+        e_icon = enemy_data["icon"] if enemy_data else "?"
+        p_color = player_data["color"] if player_data else C["text_mid"]
+        e_color = enemy_data["color"] if enemy_data else C["text_mid"]
+        p_x = w * 0.22
+        e_x = w * 0.78
+        if event == "player_hit":
+            p_x += 25
+        elif event == "enemy_hit":
+            e_x -= 25
+        self.battle_canvas.create_text(p_x, h * 0.58, text=p_icon, fill=p_color, font=("", 52))
+        self.battle_canvas.create_text(e_x, h * 0.58, text=e_icon, fill=e_color, font=("", 52))
+        self.battle_canvas.create_text(w * 0.50, h * 0.58, text="⚔", fill=C["border_gold"], font=("Georgia", 24, "bold"))
+        if event == "player_hit":
+            self.battle_canvas.create_text(w * 0.62, h * 0.37, text="💥", fill=C["red_light"], font=("", 22))
+        elif event == "enemy_hit":
+            self.battle_canvas.create_text(w * 0.38, h * 0.37, text="💥", fill=C["red_light"], font=("", 22))
+        elif event == "enemy_down":
+            self.battle_canvas.create_text(w * 0.78, h * 0.83, text="☠", fill=C["red_light"], font=("", 20))
+        elif event == "player_down":
+            self.battle_canvas.create_text(w * 0.22, h * 0.83, text="☠", fill=C["red_light"], font=("", 20))
+        if message:
+            self.battle_canvas.create_text(w * 0.5, h * 0.88, text=message, fill=C["text_mid"], font=FONTS["body_sm"])
 
     def _log(self, text, tag=""):
         self.log_text.config(state="normal")
@@ -1080,6 +1144,11 @@ class MapScreen(tk.Frame):
         tk.Label(right, text="VISTA DEL MAPA", font=FONTS["btn_sm"],
                  fg=C["text_dim"], bg=C["bg_panel"]).pack(pady=12)
 
+        self.minimap_canvas = tk.Canvas(
+            right, bg=C["bg_dark"], height=280, relief="flat", bd=0, highlightthickness=0
+        )
+        self.minimap_canvas.pack(fill="x", padx=16, pady=(0, 8))
+
         self.minimap_text = tk.Text(right, bg=C["bg_dark"], fg=C["text_bright"],
                                     font=("Courier", 14), relief="flat", bd=0, state="disabled", width=40)
         self.minimap_text.pack(fill="both", expand=True, padx=16, pady=(0, 16))
@@ -1121,10 +1190,39 @@ class MapScreen(tk.Frame):
                     start_idx = line.find("[X]")
                     self.minimap_text.tag_add("player", f"{i+1}.{start_idx}", f"{i+1}.{start_idx+3}")
             self.minimap_text.tag_config("player", foreground=C["red_light"], font=("Courier", 14, "bold"))
+            self._draw_map_canvas(mapa_str)
             
             self.minimap_text.config(state="disabled")
         except Exception:
             pass
+
+    def _draw_map_canvas(self, mapa_str):
+        self.minimap_canvas.delete("all")
+        rows = [row for row in mapa_str.split("\n") if row.strip()]
+        if not rows:
+            return
+        cols = max(len(r) for r in rows)
+        cw, ch = 22, 22
+        pad = 10
+        self.minimap_canvas.config(width=(cols * cw) + 2 * pad, height=(len(rows) * ch) + 2 * pad)
+        for y, row in enumerate(rows):
+            for x, cell in enumerate(row):
+                if cell == " ":
+                    continue
+                x1 = pad + x * cw
+                y1 = pad + y * ch
+                x2 = x1 + cw - 2
+                y2 = y1 + ch - 2
+                fill = C["bg_card"]
+                outline = C["border"]
+                if cell == "X":
+                    fill = C["red_light"]
+                    outline = C["gold"]
+                elif cell in "[]":
+                    fill = C["border_gold"]
+                self.minimap_canvas.create_rectangle(x1, y1, x2, y2, fill=fill, outline=outline)
+                if cell == "X":
+                    self.minimap_canvas.create_text((x1 + x2) / 2, (y1 + y2) / 2, text="🧭", font=("", 10))
 
 
 # ══════════════════════════════════════════════════════════════
