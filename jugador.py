@@ -35,7 +35,7 @@ class Jugador:
         posicion (str): Nombre de la zona actual en el mapa.
     """
 
-    def __init__(self, nombre: str, posicion: str = "Pradera") -> None:
+    def __init__(self, nombre: str, posicion: str = "Pradera", oro: int = 200) -> None:
         """
         Inicializa un jugador nuevo sin criaturas ni ítems.
 
@@ -53,6 +53,7 @@ class Jugador:
         self.equipo: list["Criatura"] = []
         self.inventario: list["Item"] = []
         self.posicion: str = posicion
+        self.oro: int = max(0, int(oro))
 
     # ─────────────────────────────────────────
     # EQUIPO
@@ -262,6 +263,7 @@ class Jugador:
         datos = {
             "nombre": self.nombre,
             "posicion": self.posicion,
+            "oro": self.oro,
             "equipo": [
                 {
                     "nombre": c.nombre,
@@ -333,7 +335,7 @@ class Jugador:
                 ruta,
             )
 
-        jugador = cls(datos["nombre"], datos["posicion"])
+        jugador = cls(datos["nombre"], datos["posicion"], datos.get("oro", 0))
 
         for cd in datos["equipo"]:
             c = Criatura(
@@ -382,7 +384,7 @@ class Jugador:
 
     def __repr__(self) -> str:
         return (
-            f"Jugador(nombre='{self.nombre}', posicion='{self.posicion}', "
+            f"Jugador(nombre='{self.nombre}', posicion='{self.posicion}', oro={self.oro}, "
             f"criaturas={len(self.equipo)}, items={len(self.inventario)})"
         )
 
@@ -390,5 +392,5 @@ class Jugador:
         return (
             f"Jugador: {self.nombre} | Zona: {self.posicion} | "
             f"Criaturas: {len(self.equipo)}/{CAPACIDAD_MAXIMA_EQUIPO} | "
-            f"Ítems: {len(self.inventario)}"
+            f"Ítems: {len(self.inventario)} | Oro: {self.oro}"
         )

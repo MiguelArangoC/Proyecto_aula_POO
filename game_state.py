@@ -127,7 +127,7 @@ class Juego:
     # RF1 — CREAR JUGADOR
     # ─────────────────────────────────────────
 
-    def crear_jugador(self, nombre: str) -> str:
+    def crear_jugador(self, nombre: str, criatura_inicial: str = "Ignis", oro_inicial: int = 200) -> str:
         """
         Crea un nuevo jugador con una criatura inicial (Ignis) y dos ítems de inicio.
 
@@ -140,12 +140,16 @@ class Juego:
         Lanza:
             ValueError: Si el nombre está vacío.
         """
-        self.jugador = Jugador(nombre)
-        criatura_inicial = _crear_criatura("Ignis")
-        self.jugador.agregar_criatura(criatura_inicial)
+        if criatura_inicial not in {"Ignis", "Torrente", "Rocafer"}:
+            raise ValueError("La criatura inicial debe ser Ignis, Torrente o Rocafer.")
+        self.jugador = Jugador(nombre, oro=oro_inicial)
+        self.jugador.agregar_criatura(_crear_criatura(criatura_inicial))
         self.jugador.agregar_item(_crear_item("Poción"))
         self.jugador.agregar_item(_crear_item("Trampa Básica"))
-        return f"¡Bienvenido, {nombre}! Empiezas en la Pradera con Ignis a tu lado."
+        return (
+            f"¡Bienvenido, {nombre}! Empiezas en la Pradera con {criatura_inicial} "
+            f"y {self.jugador.oro} de oro."
+        )
 
     # ─────────────────────────────────────────
     # RF2 — EXPLORAR / MOVER
@@ -202,6 +206,19 @@ class Juego:
         self.jugador.posicion = destino
         zona = self.mapa.obtener_zona(destino)
         return f"Te moviste a {destino} [{zona.clima_base}]."
+
+
+    def mini_mapa(self) -> str:
+        """Retorna un mini mapa textual con la posición actual del jugador."""
+        self._validar_jugador()
+        zonas = ["Volcán", "Pradera", "Lago"]
+        marcas = {z: ("[X]" if z == self.jugador.posicion else "[ ]") for z in zonas}
+        return (
+            "Mini mapa:\n"
+            f"  {marcas['Volcán']} Volcán\n"
+            f"      |\n"
+            f"  {marcas['Pradera']} Pradera -- {marcas['Lago']} Lago"
+        )
 
     # ─────────────────────────────────────────
     # RF4 / RF5 — INICIAR BATALLA Y TURNO
@@ -473,6 +490,7 @@ class Juego:
             "clima_base": zona.clima_base,
             "criaturas_salvajes": zona.criaturas_salvajes,
             "conexiones": zona.conexiones,
+            "mini_mapa": self.mini_mapa(),
         }
 
     # ─────────────────────────────────────────
