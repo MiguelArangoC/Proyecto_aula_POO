@@ -4,7 +4,7 @@ tipo.py
 Define la clase Tipo, que representa el tipo elemental de una criatura
 y calcula los multiplicadores de daño entre tipos opuestos.
 
-Tipos disponibles: Fuego, Agua, Tierra, Rayo, Normal
+Tipos disponibles: Fuego, Agua, Tierra, Rayo, Hielo, Normal
 """
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ _TABLA_MULTIPLICADORES: dict[str, dict[str, float]] = {
         "Agua":   0.67,
         "Tierra": 1.5,
         "Rayo":   1.0,
+        "Hielo":  1.5,
         "Normal": 1.0,
     },
     "Agua": {
@@ -25,6 +26,7 @@ _TABLA_MULTIPLICADORES: dict[str, dict[str, float]] = {
         "Agua":   1.0,
         "Tierra": 1.0,
         "Rayo":   0.67,
+        "Hielo":  0.67,
         "Normal": 1.0,
     },
     "Tierra": {
@@ -32,6 +34,7 @@ _TABLA_MULTIPLICADORES: dict[str, dict[str, float]] = {
         "Agua":   1.0,
         "Tierra": 1.0,
         "Rayo":   1.5,
+        "Hielo":  0.67,
         "Normal": 1.0,
     },
     "Rayo": {
@@ -39,6 +42,15 @@ _TABLA_MULTIPLICADORES: dict[str, dict[str, float]] = {
         "Agua":   1.5,
         "Tierra": 0.67,
         "Rayo":   1.0,
+        "Hielo":  1.0,
+        "Normal": 1.0,
+    },
+    "Hielo": {
+        "Fuego":  0.67,
+        "Agua":   1.5,
+        "Tierra": 1.5,
+        "Rayo":   1.0,
+        "Hielo":  1.0,
         "Normal": 1.0,
     },
     "Normal": {
@@ -46,6 +58,7 @@ _TABLA_MULTIPLICADORES: dict[str, dict[str, float]] = {
         "Agua":   1.0,
         "Tierra": 1.0,
         "Rayo":   1.0,
+        "Hielo":  1.0,
         "Normal": 1.0,
     },
 }

@@ -191,7 +191,13 @@ class Mapa:
                 nombre="Cueva de Roca",
                 clima_base="Tormentoso",
                 criaturas_salvajes=["Rocafer", "Voltex"],
-                conexiones={"oeste": "Volcán"},
+                conexiones={"oeste": "Volcán", "norte": "Cumbre Nevada"},
+            ),
+            Zona(
+                nombre="Cumbre Nevada",
+                clima_base="Nevado",
+                criaturas_salvajes=["Glacius", "Voltex"],
+                conexiones={"sur": "Cueva de Roca"},
             ),
         ]
 

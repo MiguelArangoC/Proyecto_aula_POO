@@ -29,6 +29,7 @@ _TIPO_ICON: dict[str, str] = {
     "Agua":   "💧",
     "Tierra": "🪨",
     "Rayo":   "⚡",
+    "Hielo":  "*",
     "Normal": "⭐",
 }
 _TIPO_COLOR: dict[str, str] = {
@@ -36,6 +37,7 @@ _TIPO_COLOR: dict[str, str] = {
     "Agua":   "#3498DB",
     "Tierra": "#95A5A6",
     "Rayo":   "#F1C40F",
+    "Hielo":  "#7FDBFF",
     "Normal": "#BDC3C7",
 }
 
@@ -166,14 +168,19 @@ class GameStateAdapter:
         # Criaturas
         self.creatures = [_criatura_a_gui(c) for c in self.juego.estado_equipo()]
 
-        # Mantener criatura activa apuntando al mismo nombre
-        if self.active_creature:
-            nombre = self.active_creature.get("_backend_nombre", "")
-            nuevo = next((c for c in self.creatures
-                          if c["_backend_nombre"] == nombre), None)
-            self.active_creature = nuevo or (self.creatures[0] if self.creatures else None)
+        # La fuente de verdad es el backend: Jugador.criatura_activa()
+        # devuelve la criatura que realmente actuara en batalla.
+        activa_backend = self.juego.jugador.criatura_activa()
+        if activa_backend is not None:
+            self.active_creature = next(
+                (c for c in self.creatures
+                 if c["_backend_nombre"] == activa_backend.nombre),
+                None,
+            )
         elif self.creatures:
             self.active_creature = self.creatures[0]
+        else:
+            self.active_creature = None
 
         # Inventario — agrupar por nombre
         inv_raw = self.juego.estado_inventario()

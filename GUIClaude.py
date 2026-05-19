@@ -525,8 +525,11 @@ class CreaturesScreen(tk.Frame):
 
     def _set_active(self, creature):
         self.app.state.set_active_creature(creature)
+        activa = self.app.state.active_creature or creature
         messagebox.showinfo("Criatura activa",
-                             f"{creature['name']} está lista para el combate.")
+                             f"{activa['name']} está lista para el combate.")
+        self._refresh_list()
+        self._show_detail(activa)
 
     def _evolve(self, creature):
         try:

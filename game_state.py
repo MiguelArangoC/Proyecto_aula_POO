@@ -44,6 +44,7 @@ CATALOGO_CRIATURAS: dict[str, dict] = {
     "Torrente": {"tipo": "Agua",   "hp": 110, "atk": 45, "defensa": 14, "velocidad": 12},
     "Rocafer":  {"tipo": "Tierra", "hp": 130, "atk": 40, "defensa": 18, "velocidad": 8},
     "Voltex":   {"tipo": "Rayo",   "hp": 90,  "atk": 60, "defensa": 10, "velocidad": 18},
+    "Glacius":  {"tipo": "Hielo",  "hp": 105, "atk": 52, "defensa": 13, "velocidad": 13},
 }
 
 CATALOGO_ITEMS: dict[str, dict] = {
@@ -78,10 +79,11 @@ CATALOGO_ITEMS: dict[str, dict] = {
 }
 
 # Qué fragmento puede dropar cada zona (None = ninguno)
-_ZONA_FRAGMENTO: dict[str, Optional[str]] = {
+_ZONA_FRAGMENTO: dict[str, Optional[str | list[str]]] = {
     "Volcán":        "Fragmento de Llama",
     "Lago":          "Fragmento de Marea",
     "Cueva de Roca": "Fragmento de Tierra",
+    "Cumbre Nevada": ["Fragmento de Escarcha", "Fragmento de Trueno"],
     "Pradera":       None,
 }
 
@@ -170,11 +172,13 @@ class Juego:
 
     def mini_mapa(self) -> str:
         self._validar_jugador()
-        zonas = ["Volcán", "Cueva de Roca", "Pradera", "Lago"]
+        zonas = ["Volcán", "Cueva de Roca", "Cumbre Nevada", "Pradera", "Lago"]
         marcas = {z: ("[X]" if z == self.jugador.posicion else "[ ]") for z in zonas}
         return (
             "Mini mapa:\n"
             f"  {marcas['Volcán']} Volcán -- {marcas['Cueva de Roca']} Cueva de Roca\n"
+            f"                         |\n"
+            f"                 {marcas['Cumbre Nevada']} Cumbre Nevada\n"
             f"      |\n"
             f"  {marcas['Pradera']} Pradera -- {marcas['Lago']} Lago"
         )
@@ -201,6 +205,8 @@ class Juego:
         zona_nombre = self.jugador.posicion
         nombre_fragmento = _ZONA_FRAGMENTO.get(zona_nombre)
         if nombre_fragmento and random.random() < PROBABILIDAD_DROP_FRAGMENTO:
+            if isinstance(nombre_fragmento, list):
+                nombre_fragmento = random.choice(nombre_fragmento)
             frag = FragmentoEvolucion(nombre_fragmento)
             # Guardamos en inventario como objeto "especial" (duck-typing)
             self.jugador.inventario.append(frag)

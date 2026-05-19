@@ -46,6 +46,20 @@ CATALOGO_FRAGMENTOS: dict[str, dict] = {
         "zona_origen": "Cueva de Roca",
         "precio_gui": 0,
     },
+    "Fragmento de Trueno": {
+        "descripcion": "Cristal electrico hallado en la Cumbre Nevada. Permite evolucionar a Voltex.",
+        "tipo_criatura": "Rayo",
+        "icono": "⚡",
+        "zona_origen": "Cumbre Nevada",
+        "precio_gui": 0,
+    },
+    "Fragmento de Escarcha": {
+        "descripcion": "Gema helada hallada en la Cumbre Nevada. Permite evolucionar a Glacius.",
+        "tipo_criatura": "Hielo",
+        "icono": "*",
+        "zona_origen": "Cumbre Nevada",
+        "precio_gui": 0,
+    },
 }
 
 # Probabilidad de drop al explorar (independiente del encuentro de criatura)

@@ -176,6 +176,96 @@ ARBOL_EVOLUCIONES: dict[str, dict] = {
             "mp_max_nuevo": 90,
         },
     },
+    "Voltex": {
+        1: {
+            "nombre":           "Voltex Ionico",
+            "fragmento":        "Fragmento de Trueno",
+            "habilidades_nuevas": [
+                CATALOGO_HABILIDADES["Chispa"],
+                CATALOGO_HABILIDADES["Aura de Tormenta"],
+            ],
+            "escala_hp":  1.18,
+            "escala_atk": 1.28,
+            "escala_def": 1.10,
+            "escala_vel": 1.25,
+            "mp_max_nuevo": 70,
+        },
+        2: {
+            "nombre":           "Voltex Magna",
+            "fragmento":        "Fragmento de Trueno",
+            "habilidades_nuevas": [
+                CATALOGO_HABILIDADES["Rayo Cruzado"],
+                CATALOGO_HABILIDADES["Tormenta Ionica"],
+                CATALOGO_HABILIDADES["Pulso Vital"],
+            ],
+            "escala_hp":  1.25,
+            "escala_atk": 1.35,
+            "escala_def": 1.14,
+            "escala_vel": 1.25,
+            "mp_max_nuevo": 115,
+        },
+    },
+    "Voltex Ionico": {
+        2: {
+            "nombre":           "Voltex Magna",
+            "fragmento":        "Fragmento de Trueno",
+            "habilidades_nuevas": [
+                CATALOGO_HABILIDADES["Rayo Cruzado"],
+                CATALOGO_HABILIDADES["Tormenta Ionica"],
+                CATALOGO_HABILIDADES["Pulso Vital"],
+            ],
+            "escala_hp":  1.25,
+            "escala_atk": 1.35,
+            "escala_def": 1.14,
+            "escala_vel": 1.25,
+            "mp_max_nuevo": 115,
+        },
+    },
+    "Glacius": {
+        1: {
+            "nombre":           "Glacius Boreal",
+            "fragmento":        "Fragmento de Escarcha",
+            "habilidades_nuevas": [
+                CATALOGO_HABILIDADES["Lanza de Hielo"],
+                CATALOGO_HABILIDADES["Paso Sombra"],
+            ],
+            "escala_hp":  1.24,
+            "escala_atk": 1.22,
+            "escala_def": 1.18,
+            "escala_vel": 1.12,
+            "mp_max_nuevo": 68,
+        },
+        2: {
+            "nombre":           "Glacius Magna",
+            "fragmento":        "Fragmento de Escarcha",
+            "habilidades_nuevas": [
+                CATALOGO_HABILIDADES["Ventisca"],
+                CATALOGO_HABILIDADES["Cero Absoluto"],
+                CATALOGO_HABILIDADES["Brisa Curativa"],
+            ],
+            "escala_hp":  1.30,
+            "escala_atk": 1.30,
+            "escala_def": 1.22,
+            "escala_vel": 1.18,
+            "mp_max_nuevo": 112,
+        },
+    },
+    "Glacius Boreal": {
+        2: {
+            "nombre":           "Glacius Magna",
+            "fragmento":        "Fragmento de Escarcha",
+            "habilidades_nuevas": [
+                CATALOGO_HABILIDADES["Ventisca"],
+                CATALOGO_HABILIDADES["Cero Absoluto"],
+                CATALOGO_HABILIDADES["Brisa Curativa"],
+            ],
+            "escala_hp":  1.30,
+            "escala_atk": 1.30,
+            "escala_def": 1.22,
+            "escala_vel": 1.18,
+            "mp_max_nuevo": 112,
+        },
+    },
 }
 
 
