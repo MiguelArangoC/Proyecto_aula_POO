@@ -270,6 +270,8 @@ class Jugador:
                     "tipo": c.tipo.nombre,
                     "hp": c.hp,
                     "hp_max": c.hp_max,
+                    "mp": c.mp,
+                    "mp_max": c.mp_max,
                     "atk": c.atk,
                     "defensa": c.defensa,
                     "velocidad": c.velocidad,
@@ -277,6 +279,8 @@ class Jugador:
                     "nivel": c.nivel,
                     "experiencia": c.experiencia,
                     "xp_siguiente": c.xp_siguiente,
+                    "forma": c.forma,
+                    "habilidades": [h.nombre for h in c.habilidades],
                     "item_equipado": (
                         {
                             "nombre": c.item_equipado.nombre,
@@ -300,6 +304,7 @@ class Jugador:
                     "efecto_negativo": i.efecto_negativo,
                     "es_consumible": i.es_consumible,
                     "es_captura": i.es_captura,
+                    "es_fragmento": getattr(i, "es_fragmento", False),
                 }
                 for i in self.inventario
             ],
@@ -325,6 +330,8 @@ class Jugador:
         from excepciones import PartidaNoEncontradaError
         from criatura import Criatura
         from item import Item
+        from fragmento import FragmentoEvolucion, CATALOGO_FRAGMENTOS
+        from habilidad import CATALOGO_HABILIDADES
 
         try:
             with open(ruta, "r", encoding="utf-8") as f:
@@ -347,10 +354,20 @@ class Jugador:
                 velocidad=cd["velocidad"],
                 precision=cd["precision"],
                 nivel=cd["nivel"],
+                mp_max=cd.get("mp_max", 40),
+                forma=cd.get("forma", 0),
             )
             c.hp = cd["hp"]
+            c.hp_max = cd.get("hp_max", c.hp_max)
+            c.mp = cd.get("mp", c.mp_max)
             c.experiencia = cd["experiencia"]
             c.xp_siguiente = cd["xp_siguiente"]
+            if "habilidades" in cd:
+                c.habilidades = [
+                    CATALOGO_HABILIDADES[nombre]
+                    for nombre in cd["habilidades"]
+                    if nombre in CATALOGO_HABILIDADES
+                ] or [CATALOGO_HABILIDADES["Atacar"]]
             # Restaurar ítem equipado si existía
             if cd.get("item_equipado") is not None:
                 id_ = cd["item_equipado"]
@@ -366,14 +383,17 @@ class Jugador:
             jugador.equipo.append(c)
 
         for id_ in datos["inventario"]:
-            item = Item(
-                nombre=id_["nombre"],
-                descripcion=id_["descripcion"],
-                efecto_positivo=id_["efecto_positivo"],
-                efecto_negativo=id_["efecto_negativo"],
-                es_consumible=id_["es_consumible"],
-                es_captura=id_["es_captura"],
-            )
+            if id_.get("es_fragmento") or id_["nombre"] in CATALOGO_FRAGMENTOS:
+                item = FragmentoEvolucion(id_["nombre"])
+            else:
+                item = Item(
+                    nombre=id_["nombre"],
+                    descripcion=id_["descripcion"],
+                    efecto_positivo=id_["efecto_positivo"],
+                    efecto_negativo=id_["efecto_negativo"],
+                    es_consumible=id_["es_consumible"],
+                    es_captura=id_["es_captura"],
+                )
             jugador.inventario.append(item)
 
         return jugador

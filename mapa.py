@@ -179,13 +179,19 @@ class Mapa:
                 nombre="Volcán",
                 clima_base="Caluroso",
                 criaturas_salvajes=["Ignis", "Rocafer"],
-                conexiones={"sur": "Pradera"},
+                conexiones={"sur": "Pradera", "este": "Cueva de Roca"},
             ),
             Zona(
                 nombre="Lago",
                 clima_base="Lluvioso",
                 criaturas_salvajes=["Torrente", "Voltex"],
                 conexiones={"oeste": "Pradera"},
+            ),
+            Zona(
+                nombre="Cueva de Roca",
+                clima_base="Tormentoso",
+                criaturas_salvajes=["Rocafer", "Voltex"],
+                conexiones={"oeste": "Volcán"},
             ),
         ]
 

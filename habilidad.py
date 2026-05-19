@@ -125,8 +125,8 @@ class Habilidad:
             objetivo.hp = max(0, objetivo.hp - dano_final)
             resultado.update({"conectó": True, "daño": dano_final})
             resultado["mensaje"] = (
-                f"{usuario.nombre} usó {self.nombre} → {dano_final} de daño "
-                f"a {objetivo.nombre} (tipo ×{mult_tipo:.2f})."
+                f"{usuario.nombre} usó {self.nombre} -> {dano_final} de daño "
+                f"a {objetivo.nombre} (tipo x{mult_tipo:.2f})."
             )
 
         # ── ATAQUE ESPECIAL ────────────────────────────────────────────────
@@ -147,7 +147,7 @@ class Habilidad:
             objetivo.hp = max(0, objetivo.hp - dano_final)
             resultado.update({"conectó": True, "daño": dano_final})
             resultado["mensaje"] = (
-                f"⚡ {usuario.nombre} usó {self.nombre} [ESPECIAL] → {dano_final} de daño "
+                f"{usuario.nombre} usó {self.nombre} [ESPECIAL] -> {dano_final} de daño "
                 f"a {objetivo.nombre} (ignora parte de la DEF)."
             )
 
@@ -238,8 +238,8 @@ CATALOGO_HABILIDADES: dict[str, Habilidad] = {
     ),
 
     # ── Torrente (Agua) ──────────────────────────────────────────────────
-    "Chorro de Agua": Habilidad(
-        nombre="Chorro de Agua",
+    "Squirt de Agua": Habilidad(
+        nombre="Squirt de Agua",
         tipo="ataque",
         costo_mp=10,
         potencia=1.4,

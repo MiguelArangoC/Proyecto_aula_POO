@@ -6,12 +6,13 @@ Expone la clase Juego que orquesta todos los módulos: Jugador, Mapa,
 Batalla, ítems y persistencia. La interfaz gráfica (GUI) solo llama
 métodos de esta clase; nunca accede directamente al modelo.
 
-Uso típico desde la GUI:
-    juego = Juego()
-    juego.crear_jugador("Ash")
-    resultado = juego.mover("norte")
-    resultado = juego.iniciar_batalla()
-    resultado = juego.ejecutar_turno()
+Cambios en esta versión
+-----------------------
+  - explorar() puede dropar FragmentoEvolucion en zonas con fragmento asignado.
+  - ejecutar_turno() acepta nombre_habilidad para usar habilidades reales.
+  - Nuevo método evolucionar_criatura() que consume el fragmento del inventario.
+  - items_captura_disponibles() también devuelve nombres de fragmentos.
+  - estado_inventario() incluye fragmentos serializados.
 """
 
 from __future__ import annotations
@@ -23,6 +24,7 @@ from jugador import Jugador
 from mapa import Mapa
 from batalla import Batalla, EstadoBatalla
 from item import Item
+from fragmento import FragmentoEvolucion, CATALOGO_FRAGMENTOS, PROBABILIDAD_DROP_FRAGMENTO
 from excepciones import (
     EquipoLlenoError,
     CapturaFallidaError,
@@ -75,6 +77,14 @@ CATALOGO_ITEMS: dict[str, dict] = {
     },
 }
 
+# Qué fragmento puede dropar cada zona (None = ninguno)
+_ZONA_FRAGMENTO: dict[str, Optional[str]] = {
+    "Volcán":        "Fragmento de Llama",
+    "Lago":          "Fragmento de Marea",
+    "Cueva de Roca": "Fragmento de Tierra",
+    "Pradera":       None,
+}
+
 
 def _crear_criatura(nombre: str) -> Criatura:
     """Instancia una Criatura desde el catálogo."""
@@ -109,12 +119,6 @@ def _crear_item(nombre: str) -> Item:
 class Juego:
     """
     Orquesta toda la lógica del juego y expone métodos simples para la GUI.
-
-    Atributos:
-        jugador (Optional[Jugador]): El jugador activo (None hasta crear_jugador).
-        mapa (Mapa): El mapa del mundo con todas las zonas.
-        batalla_activa (Optional[Batalla]): Batalla en curso (None si no hay combate).
-        criatura_encontrada (Optional[Criatura]): Criatura salvaje del encuentro actual.
     """
 
     def __init__(self) -> None:
@@ -128,18 +132,6 @@ class Juego:
     # ─────────────────────────────────────────
 
     def crear_jugador(self, nombre: str, criatura_inicial: str = "Ignis", oro_inicial: int = 200) -> str:
-        """
-        Crea un nuevo jugador con una criatura inicial (Ignis) y dos ítems de inicio.
-
-        Parámetros:
-            nombre (str): Nombre del jugador.
-
-        Retorna:
-            str: Mensaje de confirmación.
-
-        Lanza:
-            ValueError: Si el nombre está vacío.
-        """
         if criatura_inicial not in {"Ignis", "Torrente", "Rocafer"}:
             raise ValueError("La criatura inicial debe ser Ignis, Torrente o Rocafer.")
         self.jugador = Jugador(nombre, oro=oro_inicial)
@@ -156,45 +148,14 @@ class Juego:
     # ─────────────────────────────────────────
 
     def obtener_zona_actual(self) -> str:
-        """
-        Retorna el nombre de la zona donde se encuentra el jugador.
-
-        Retorna:
-            str: Nombre de la zona actual.
-
-        Lanza:
-            RuntimeError: Si no hay jugador creado.
-        """
         self._validar_jugador()
         return self.jugador.posicion
 
     def obtener_conexiones(self) -> dict[str, str]:
-        """
-        Retorna las zonas accesibles desde la posición actual.
-
-        Retorna:
-            dict[str, str]: {dirección: nombre_zona_destino}
-
-        Lanza:
-            RuntimeError: Si no hay jugador creado.
-        """
         self._validar_jugador()
         return self.mapa.zonas_adyacentes(self.jugador.posicion)
 
     def mover(self, direccion: str) -> str:
-        """
-        Mueve al jugador en la dirección indicada.
-
-        Parámetros:
-            direccion (str): Dirección de movimiento (ej. 'norte').
-
-        Retorna:
-            str: Mensaje describiendo el movimiento.
-
-        Lanza:
-            RuntimeError: Si no hay jugador.
-            ValueError: Si la dirección no es válida desde la zona actual.
-        """
         self._validar_jugador()
         conexiones = self.obtener_conexiones()
         if direccion not in conexiones:
@@ -207,15 +168,13 @@ class Juego:
         zona = self.mapa.obtener_zona(destino)
         return f"Te moviste a {destino} [{zona.clima_base}]."
 
-
     def mini_mapa(self) -> str:
-        """Retorna un mini mapa textual con la posición actual del jugador."""
         self._validar_jugador()
-        zonas = ["Volcán", "Pradera", "Lago"]
+        zonas = ["Volcán", "Cueva de Roca", "Pradera", "Lago"]
         marcas = {z: ("[X]" if z == self.jugador.posicion else "[ ]") for z in zonas}
         return (
             "Mini mapa:\n"
-            f"  {marcas['Volcán']} Volcán\n"
+            f"  {marcas['Volcán']} Volcán -- {marcas['Cueva de Roca']} Cueva de Roca\n"
             f"      |\n"
             f"  {marcas['Pradera']} Pradera -- {marcas['Lago']} Lago"
         )
@@ -226,41 +185,43 @@ class Juego:
 
     def explorar(self) -> str:
         """
-        Intenta generar un encuentro con una criatura salvaje en la zona actual.
-        Probabilidad de encuentro: 60%.
+        Intenta generar un encuentro con una criatura salvaje (60% prob).
+        Adicionalmente, en zonas con fragmento asignado, puede dropar un
+        FragmentoEvolucion (PROBABILIDAD_DROP_FRAGMENTO independiente).
 
-        Retorna:
-            str: Mensaje indicando si hubo encuentro o no.
-
-        Lanza:
-            RuntimeError: Si no hay jugador o ya hay una batalla activa.
+        Retorna un mensaje que describe lo ocurrido.
         """
         self._validar_jugador()
         if self.batalla_activa and self.batalla_activa.estado == EstadoBatalla.EN_CURSO:
             raise RuntimeError("Ya hay una batalla en curso.")
 
-        if random.random() >= 0.60:
-            return "Exploraste la zona pero no encontraste nada."
+        mensajes: list[str] = []
 
-        zona = self.mapa.obtener_zona(self.jugador.posicion)
+        # — Posible drop de fragmento —
+        zona_nombre = self.jugador.posicion
+        nombre_fragmento = _ZONA_FRAGMENTO.get(zona_nombre)
+        if nombre_fragmento and random.random() < PROBABILIDAD_DROP_FRAGMENTO:
+            frag = FragmentoEvolucion(nombre_fragmento)
+            # Guardamos en inventario como objeto "especial" (duck-typing)
+            self.jugador.inventario.append(frag)
+            mensajes.append(f"✨ ¡Encontraste un {nombre_fragmento}! Se guardó en tu inventario.")
+
+        # — Posible encuentro de criatura —
+        if random.random() >= 0.60:
+            mensajes.append("Exploraste la zona pero no encontraste ninguna criatura.")
+            return "\n".join(mensajes) if mensajes else "Exploraste la zona pero no encontraste nada."
+
+        zona = self.mapa.obtener_zona(zona_nombre)
         nombre_criatura = zona.obtener_criatura_aleatoria()
         if not nombre_criatura:
-            return "Esta zona no tiene criaturas salvajes."
+            mensajes.append("Esta zona no tiene criaturas salvajes.")
+            return "\n".join(mensajes)
 
         self.criatura_encontrada = _crear_criatura(nombre_criatura)
-        return f"¡Apareció un {nombre_criatura} salvaje!"
+        mensajes.append(f"¡Apareció un {nombre_criatura} salvaje!")
+        return "\n".join(mensajes)
 
     def iniciar_batalla(self) -> str:
-        """
-        Inicia una batalla contra la criatura encontrada en la exploración.
-
-        Retorna:
-            str: El primer mensaje del log de la batalla.
-
-        Lanza:
-            RuntimeError: Si no hay criatura encontrada o no hay jugador.
-            CriaturaDebilitadaError: Si todas las criaturas del jugador están debilitadas.
-        """
         self._validar_jugador()
         if self.criatura_encontrada is None:
             raise RuntimeError("No hay criatura salvaje para batallar. Explora primero.")
@@ -273,30 +234,31 @@ class Juego:
         )
         return self.batalla_activa.log[0]
 
-    def ejecutar_turno(self, usar_item: bool = False, nombre_item: str = "") -> dict:
+    def ejecutar_turno(
+        self,
+        usar_item: bool = False,
+        nombre_item: str = "",
+        nombre_habilidad: str = "",
+    ) -> dict:
         """
         Ejecuta un turno de la batalla activa.
 
-        Parámetros:
-            usar_item (bool): Si True, se equipa el ítem indicado antes del turno.
-            nombre_item (str): Nombre del ítem a equipar (requerido si usar_item=True).
+        Parámetros adicionales respecto a la versión anterior:
+            nombre_habilidad (str): Nombre de la habilidad que usará la criatura
+                del jugador este turno. Si está vacío se usa 'Atacar'.
 
         Retorna:
-            dict: {
-                "estado": str (nombre del EstadoBatalla),
-                "log": list[str] (eventos de este turno),
-                "resumen": str (estado actual de la batalla),
-            }
-
-        Lanza:
-            RuntimeError: Si no hay batalla activa.
-            ItemNoDisponibleError: Si el ítem no está en el inventario.
+            dict con estado, log, resumen y (nuevo) habilidad_usada.
         """
         if self.batalla_activa is None:
             raise RuntimeError("No hay batalla activa.")
 
         log_antes = len(self.batalla_activa.log)
-        estado = self.batalla_activa.ejecutar_turno(usar_item=usar_item, nombre_item=nombre_item)
+        estado = self.batalla_activa.ejecutar_turno(
+            usar_item=usar_item,
+            nombre_item=nombre_item,
+            nombre_habilidad=nombre_habilidad,
+        )
         nuevos_eventos = self.batalla_activa.log[log_antes:]
 
         if estado != EstadoBatalla.EN_CURSO:
@@ -306,18 +268,10 @@ class Juego:
             "estado": estado.name,
             "log": nuevos_eventos,
             "resumen": self.batalla_activa.resumen(),
+            "habilidad_usada": nombre_habilidad or "Atacar",
         }
 
     def retirarse(self) -> str:
-        """
-        Retira al jugador de la batalla actual.
-
-        Retorna:
-            str: Mensaje de retirada.
-
-        Lanza:
-            RuntimeError: Si no hay batalla activa.
-        """
         if self.batalla_activa is None:
             raise RuntimeError("No hay batalla activa.")
         self.batalla_activa.retirarse()
@@ -325,14 +279,12 @@ class Juego:
         return f"{self.jugador.nombre} se retiró de la batalla."
 
     def hay_batalla_activa(self) -> bool:
-        """Retorna True si hay una batalla en curso."""
         return (
             self.batalla_activa is not None
             and self.batalla_activa.estado == EstadoBatalla.EN_CURSO
         )
 
     def hay_criatura_encontrada(self) -> bool:
-        """Retorna True si hay una criatura encontrada pendiente de batalla o captura."""
         return self.criatura_encontrada is not None
 
     # ─────────────────────────────────────────
@@ -340,31 +292,15 @@ class Juego:
     # ─────────────────────────────────────────
 
     def capturar(self, nombre_item_captura: str) -> str:
-        """
-        Intenta capturar la criatura encontrada con un ítem de captura.
-
-        Parámetros:
-            nombre_item_captura (str): Nombre del ítem de captura del inventario.
-
-        Retorna:
-            str: Mensaje indicando éxito o fallo de la captura.
-
-        Lanza:
-            RuntimeError: Si no hay criatura encontrada.
-            ItemNoDisponibleError: Si el ítem no está en el inventario.
-            EquipoLlenoError: Si el equipo ya tiene 6 criaturas.
-            CapturaFallidaError: Si la captura falla por probabilidad.
-        """
         self._validar_jugador()
         if self.criatura_encontrada is None:
             raise RuntimeError("No hay criatura salvaje para capturar.")
-
         try:
             self.jugador.capturar_criatura(self.criatura_encontrada, nombre_item_captura)
             nombre = self.criatura_encontrada.nombre
             self.criatura_encontrada = None
             return f"¡{nombre} fue capturado y se unió a tu equipo!"
-        except CapturaFallidaError as e:
+        except CapturaFallidaError:
             self.criatura_encontrada = None
             raise
 
@@ -373,22 +309,6 @@ class Juego:
     # ─────────────────────────────────────────
 
     def equipar_item(self, indice_criatura: int, nombre_item: str) -> str:
-        """
-        Equipa un ítem a una criatura del equipo del jugador.
-
-        Parámetros:
-            indice_criatura (int): Posición (0-based) de la criatura en el equipo.
-            nombre_item (str): Nombre del ítem del inventario.
-
-        Retorna:
-            str: Mensaje de confirmación.
-
-        Lanza:
-            RuntimeError: Si no hay jugador.
-            IndexError: Si el índice de criatura es inválido.
-            ItemNoDisponibleError: Si el ítem no está en el inventario.
-            CriaturaDebilitadaError: Si la criatura está debilitada.
-        """
         self._validar_jugador()
         if indice_criatura < 0 or indice_criatura >= len(self.jugador.equipo):
             raise IndexError(f"No existe una criatura en la posición {indice_criatura}.")
@@ -397,19 +317,6 @@ class Juego:
         return f"{nombre_item} equipado a {criatura.nombre}."
 
     def agregar_item_inventario(self, nombre_item: str) -> str:
-        """
-        Agrega un ítem del catálogo al inventario del jugador.
-        (Útil para pruebas o tiendas futuras.)
-
-        Parámetros:
-            nombre_item (str): Nombre del ítem a agregar.
-
-        Retorna:
-            str: Mensaje de confirmación.
-
-        Lanza:
-            KeyError: Si el ítem no existe en el catálogo.
-        """
         self._validar_jugador()
         if nombre_item not in CATALOGO_ITEMS:
             raise KeyError(f"'{nombre_item}' no existe en el catálogo de ítems.")
@@ -417,80 +324,153 @@ class Juego:
         return f"{nombre_item} agregado al inventario."
 
     # ─────────────────────────────────────────
+    # NUEVO — EVOLUCIONAR CRIATURA
+    # ─────────────────────────────────────────
+
+    def evolucionar_criatura(self, nombre_criatura: str) -> str:
+        """
+        Evoluciona la criatura indicada consumiendo el fragmento correcto
+        del inventario del jugador.
+
+        Retorna:
+            str: Mensaje descriptivo del resultado.
+
+        Lanza:
+            ValueError: Si la criatura no tiene fragmento compatible en el inventario.
+            ValueError: Si la criatura no puede evolucionar.
+        """
+        self._validar_jugador()
+        criatura = next(
+            (c for c in self.jugador.equipo if c.nombre == nombre_criatura), None
+        )
+        if criatura is None:
+            raise ValueError(f"Criatura '{nombre_criatura}' no encontrada en el equipo.")
+
+        # Buscar un fragmento compatible en el inventario
+        fragmento = None
+        for item in self.jugador.inventario:
+            if isinstance(item, FragmentoEvolucion):
+                puede, _ = criatura.puede_evolucionar(item)
+                if puede:
+                    fragmento = item
+                    break
+
+        if fragmento is None:
+            # Intentar determinar qué fragmento necesita para dar mensaje claro
+            siguiente = criatura.forma + 1
+            from criatura import ARBOL_EVOLUCIONES
+            datos_evo = ARBOL_EVOLUCIONES.get(criatura.nombre, {}).get(siguiente)
+            if datos_evo:
+                raise ValueError(
+                    f"{criatura.nombre} necesita un {datos_evo['fragmento']} "
+                    f"para evolucionar. ¡Encuéntralo explorando la zona correcta!"
+                )
+            raise ValueError(f"{criatura.nombre} no tiene evolución definida o ya alcanzó su forma máxima.")
+
+        msg = criatura.evolucionar(fragmento)
+        # Consumir el fragmento del inventario
+        self.jugador.inventario.remove(fragmento)
+        return msg
+
+    def habilidades_criatura_activa(self) -> list[dict]:
+        """
+        Retorna las habilidades de la criatura activa del jugador en formato dict.
+        """
+        self._validar_jugador()
+        criatura = self.jugador.criatura_activa()
+        if criatura is None:
+            return []
+        return [
+            {
+                "nombre":      h.nombre,
+                "tipo":        h.tipo,
+                "costo_mp":    h.costo_mp,
+                "potencia":    h.potencia,
+                "descripcion": h.descripcion,
+                "icono":       h.icono,
+                "puede_usar":  criatura.mp >= h.costo_mp,
+            }
+            for h in criatura.habilidades
+        ]
+
+    # ─────────────────────────────────────────
     # RF7 — CONSULTAR EQUIPO E INVENTARIO
     # ─────────────────────────────────────────
 
     def estado_equipo(self) -> list[dict]:
-        """
-        Retorna la información del equipo del jugador como lista de diccionarios.
-
-        Retorna:
-            list[dict]: Una entrada por criatura con sus estadísticas actuales.
-        """
         self._validar_jugador()
         resultado = []
         for c in self.jugador.equipo:
             resultado.append({
-                "nombre": c.nombre,
-                "tipo": c.tipo.nombre,
-                "nivel": c.nivel,
-                "hp": c.hp,
-                "hp_max": c.hp_max,
-                "atk": c.atk,
-                "defensa": c.defensa,
-                "velocidad": c.velocidad,
-                "experiencia": c.experiencia,
+                "nombre":       c.nombre,
+                "tipo":         c.tipo.nombre,
+                "nivel":        c.nivel,
+                "hp":           c.hp,
+                "hp_max":       c.hp_max,
+                "mp":           c.mp,
+                "mp_max":       c.mp_max,
+                "atk":          c.atk,
+                "defensa":      c.defensa,
+                "velocidad":    c.velocidad,
+                "experiencia":  c.experiencia,
                 "xp_siguiente": c.xp_siguiente,
                 "item_equipado": c.item_equipado.nombre if c.item_equipado else "Ninguno",
-                "debilitada": c.esta_debilitada(),
+                "debilitada":   c.esta_debilitada(),
+                "forma":        c.forma,
+                "habilidades":  [h.nombre for h in c.habilidades],
             })
         return resultado
 
     def estado_inventario(self) -> list[dict]:
         """
-        Retorna la información del inventario del jugador.
-
-        Retorna:
-            list[dict]: Una entrada por ítem con nombre, descripción y tipo.
+        Retorna ítems e incluye FragmentoEvolucion como tipo especial.
         """
         self._validar_jugador()
-        return [
-            {
-                "nombre": i.nombre,
-                "descripcion": i.descripcion,
-                "es_consumible": i.es_consumible,
-                "es_captura": i.es_captura,
-                "efecto_positivo": i.efecto_positivo,
-                "efecto_negativo": i.efecto_negativo,
-            }
-            for i in self.jugador.inventario
-        ]
+        resultado = []
+        for i in self.jugador.inventario:
+            if isinstance(i, FragmentoEvolucion):
+                resultado.append({
+                    "nombre":         i.nombre,
+                    "descripcion":    i.descripcion,
+                    "es_consumible":  True,
+                    "es_captura":     False,
+                    "es_fragmento":   True,
+                    "efecto_positivo": {},
+                    "efecto_negativo": {},
+                    "icono":          i.icono,
+                    "tipo_criatura":  i.tipo_criatura,
+                })
+            else:
+                resultado.append({
+                    "nombre":         i.nombre,
+                    "descripcion":    i.descripcion,
+                    "es_consumible":  i.es_consumible,
+                    "es_captura":     i.es_captura,
+                    "es_fragmento":   False,
+                    "efecto_positivo": i.efecto_positivo,
+                    "efecto_negativo": i.efecto_negativo,
+                })
+        return resultado
 
     def items_captura_disponibles(self) -> list[str]:
-        """
-        Retorna los nombres de los ítems de captura en el inventario.
-
-        Retorna:
-            list[str]: Nombres de ítems con es_captura=True.
-        """
         self._validar_jugador()
-        return [i.nombre for i in self.jugador.inventario if i.es_captura]
+        return [
+            i.nombre for i in self.jugador.inventario
+            if hasattr(i, "es_captura") and i.es_captura
+        ]
 
     def info_zona_actual(self) -> dict:
-        """
-        Retorna información de la zona donde está el jugador.
-
-        Retorna:
-            dict: nombre, clima_base, criaturas_salvajes, conexiones.
-        """
         self._validar_jugador()
         zona = self.mapa.obtener_zona(self.jugador.posicion)
+        tiene_fragmento = _ZONA_FRAGMENTO.get(zona.nombre) is not None
         return {
-            "nombre": zona.nombre,
-            "clima_base": zona.clima_base,
+            "nombre":            zona.nombre,
+            "clima_base":        zona.clima_base,
             "criaturas_salvajes": zona.criaturas_salvajes,
-            "conexiones": zona.conexiones,
-            "mini_mapa": self.mini_mapa(),
+            "conexiones":        zona.conexiones,
+            "mini_mapa":         self.mini_mapa(),
+            "fragmento_zona":    _ZONA_FRAGMENTO.get(zona.nombre),
+            "tiene_fragmento":   tiene_fragmento,
         }
 
     # ─────────────────────────────────────────
@@ -498,36 +478,11 @@ class Juego:
     # ─────────────────────────────────────────
 
     def guardar_partida(self, ruta: str = "partida.json") -> str:
-        """
-        Guarda el estado actual del jugador en un archivo JSON.
-
-        Parámetros:
-            ruta (str): Ruta del archivo de guardado.
-
-        Retorna:
-            str: Mensaje de confirmación.
-
-        Lanza:
-            RuntimeError: Si no hay jugador creado.
-            OSError: Si no se puede escribir el archivo.
-        """
         self._validar_jugador()
         self.jugador.guardar(ruta)
         return f"Partida guardada en '{ruta}'."
 
     def cargar_partida(self, ruta: str = "partida.json") -> str:
-        """
-        Carga una partida guardada y restaura el estado del jugador.
-
-        Parámetros:
-            ruta (str): Ruta del archivo de guardado.
-
-        Retorna:
-            str: Mensaje de confirmación con nombre y posición restaurados.
-
-        Lanza:
-            PartidaNoEncontradaError: Si el archivo no existe.
-        """
         self.jugador = Jugador.cargar(ruta)
         self.batalla_activa = None
         self.criatura_encontrada = None
@@ -541,172 +496,9 @@ class Juego:
     # ─────────────────────────────────────────
 
     def _validar_jugador(self) -> None:
-        """
-        Verifica que exista un jugador activo.
-
-        Lanza:
-            RuntimeError: Si no se ha creado un jugador todavía.
-        """
         if self.jugador is None:
             raise RuntimeError("No hay jugador creado. Llama a crear_jugador() primero.")
 
     def hay_partida_guardada(self, ruta: str = "partida.json") -> bool:
-        """
-        Verifica si existe un archivo de partida guardada en la ruta dada.
-
-        Parámetros:
-            ruta (str): Ruta a verificar.
-
-        Retorna:
-            bool: True si el archivo existe.
-        """
         import os
         return os.path.isfile(ruta)
-
-
-# ─────────────────────────────────────────
-# DEMO EN CONSOLA (para probar sin GUI)
-# ─────────────────────────────────────────
-
-def _menu(opciones: list[str]) -> int:
-    """Muestra un menú numerado y retorna la opción elegida (1-based)."""
-    for i, op in enumerate(opciones, 1):
-        print(f"  [{i}] {op}")
-    while True:
-        try:
-            elec = int(input("Opción: "))
-            if 1 <= elec <= len(opciones):
-                return elec
-        except (ValueError, EOFError):
-            pass
-
-
-def main() -> None:
-    """Punto de entrada para prueba en consola."""
-    juego = Juego()
-
-    # Inicio: cargar o nueva partida
-    if juego.hay_partida_guardada():
-        print("Se encontró una partida guardada.")
-        op = _menu(["Continuar partida guardada", "Nueva partida"])
-        if op == 1:
-            print(juego.cargar_partida())
-        else:
-            nombre = input("Nombre del jugador: ").strip() or "Ash"
-            print(juego.crear_jugador(nombre))
-    else:
-        nombre = input("Nombre del jugador: ").strip() or "Ash"
-        print(juego.crear_jugador(nombre))
-
-    # Bucle principal
-    while True:
-        zona = juego.info_zona_actual()
-        print(f"\n=== {zona['nombre']} [{zona['clima_base']}] ===")
-        print(f"Jugador: {juego.jugador}")
-
-        op = _menu(["Mover", "Explorar", "Ver equipo", "Ver inventario", "Guardar", "Salir"])
-
-        if op == 1:  # Mover
-            conexiones = juego.obtener_conexiones()
-            if not conexiones:
-                print("No hay salidas disponibles desde aquí.")
-                continue
-            dirs = list(conexiones.keys())
-            print("¿Hacia dónde?")
-            elec = _menu([f"{d} → {conexiones[d]}" for d in dirs])
-            try:
-                print(juego.mover(dirs[elec - 1]))
-            except ValueError as e:
-                print(f"Error: {e}")
-
-        elif op == 2:  # Explorar
-            try:
-                msg = juego.explorar()
-                print(msg)
-                if not juego.hay_criatura_encontrada():
-                    continue
-
-                # Encontró criatura: batallar o capturar
-                accion = _menu(["Batallar", "Capturar", "Huir"])
-                if accion == 1:
-                    print(juego.iniciar_batalla())
-                    while juego.hay_batalla_activa():
-                        print(f"\n{juego.batalla_activa.resumen()}")
-                        turno_op = _menu(["Atacar", "Usar ítem", "Retirarse"])
-                        if turno_op == 1:
-                            resultado = juego.ejecutar_turno()
-                        elif turno_op == 2:
-                            inv = juego.estado_inventario()
-                            if not inv:
-                                print("Sin ítems.")
-                                resultado = juego.ejecutar_turno()
-                            else:
-                                print("¿Qué ítem usar?")
-                                ei = _menu([i["nombre"] for i in inv])
-                                resultado = juego.ejecutar_turno(
-                                    usar_item=True,
-                                    nombre_item=inv[ei - 1]["nombre"],
-                                )
-                        else:
-                            print(juego.retirarse())
-                            break
-                        for evento in resultado["log"]:
-                            print(" ", evento)
-                        if resultado["estado"] != "EN_CURSO":
-                            print(f"\n--- {resultado['estado']} ---")
-                            break
-
-                elif accion == 2:
-                    items_cap = juego.items_captura_disponibles()
-                    if not items_cap:
-                        print("No tienes ítems de captura.")
-                    else:
-                        print("¿Qué trampa usar?")
-                        ei = _menu(items_cap)
-                        try:
-                            print(juego.capturar(items_cap[ei - 1]))
-                        except CapturaFallidaError as e:
-                            print(f"Captura fallida: {e}")
-                        except EquipoLlenoError as e:
-                            print(f"Equipo lleno: {e}")
-                else:
-                    juego.criatura_encontrada = None
-                    print("Huiste.")
-
-            except RuntimeError as e:
-                print(f"Error: {e}")
-
-        elif op == 3:  # Ver equipo
-            equipo = juego.estado_equipo()
-            if not equipo:
-                print("Sin criaturas en el equipo.")
-            for c in equipo:
-                estado = "✗ DEBILITADA" if c["debilitada"] else "✓"
-                print(
-                    f"  {estado} {c['nombre']} (Nv.{c['nivel']} | {c['tipo']}) "
-                    f"HP:{c['hp']}/{c['hp_max']} ATK:{c['atk']} DEF:{c['defensa']} "
-                    f"VEL:{c['velocidad']} XP:{c['experiencia']}/{c['xp_siguiente']} "
-                    f"Ítem:{c['item_equipado']}"
-                )
-
-        elif op == 4:  # Ver inventario
-            inv = juego.estado_inventario()
-            if not inv:
-                print("Inventario vacío.")
-            for item in inv:
-                tipo = "Captura" if item["es_captura"] else ("Consumible" if item["es_consumible"] else "Equipable")
-                print(f"  [{tipo}] {item['nombre']}: {item['descripcion']}")
-
-        elif op == 5:  # Guardar
-            try:
-                print(juego.guardar_partida())
-            except OSError as e:
-                print(f"Error al guardar: {e}")
-
-        else:  # Salir
-            print("¡Hasta la próxima!")
-            break
-
-
-if __name__ == "__main__":
-    main()

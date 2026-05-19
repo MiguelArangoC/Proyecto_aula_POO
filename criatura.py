@@ -91,7 +91,7 @@ ARBOL_EVOLUCIONES: dict[str, dict] = {
             "nombre":           "Torrente Furioso",
             "fragmento":        "Fragmento de Marea",
             "habilidades_nuevas": [
-                CATALOGO_HABILIDADES["Chorro de Agua"],
+                CATALOGO_HABILIDADES["Squirt de Agua"],
                 CATALOGO_HABILIDADES["Aura de Tormenta"],
             ],
             "escala_hp":  1.22,
@@ -240,6 +240,7 @@ class Criatura:
     # ─────────────────────────────────────────
 
     def esta_debilitada(self) -> bool:
+        """Retorna True si la criatura no tiene HP disponible."""
         return self.hp <= 0
 
     def recuperar_mp_turno(self) -> None:
@@ -354,6 +355,7 @@ class Criatura:
     # ─────────────────────────────────────────
 
     def ganar_experiencia(self, xp: int) -> bool:
+        """Agrega experiencia y retorna True si la criatura subió de nivel."""
         if xp <= 0:
             raise ValueError("La experiencia ganada debe ser mayor que 0.")
         self.experiencia += xp

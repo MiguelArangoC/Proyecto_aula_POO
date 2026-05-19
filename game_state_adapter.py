@@ -75,14 +75,15 @@ SHOP_ITEMS = [
 def _criatura_a_gui(c: dict) -> dict:
     """Convierte un dict de estado_equipo() al formato que espera la GUI."""
     tipo = c["tipo"]
+    habilidades = c.get("habilidades", ["Atacar"])
     return {
         "name":      c["nombre"],
         "type":      tipo,
         "level":     c["nivel"],
         "hp":        c["hp"],
         "max_hp":    c["hp_max"],
-        "mp":        0,
-        "max_mp":    1,   # no existe MP, barra vacía
+        "mp":        c.get("mp", 0),
+        "max_mp":    c.get("mp_max", 1),
         "xp":        c["experiencia"],
         "xp_next":   c["xp_siguiente"],
         "atk":       c["atk"],
@@ -91,8 +92,9 @@ def _criatura_a_gui(c: dict) -> dict:
         "icon":      _TIPO_ICON.get(tipo, "❓"),
         "color":     _TIPO_COLOR.get(tipo, "#FFFFFF"),
         "status":    "Debilitada" if c["debilitada"] else None,
-        "skills":    ["Atacar"],   # acción básica siempre disponible
+        "skills":    habilidades,
         "item":      c["item_equipado"],
+        "form":      c.get("forma", 0),
         # referencia al índice para equipar ítems
         "_backend_nombre": c["nombre"],
     }
@@ -100,7 +102,10 @@ def _criatura_a_gui(c: dict) -> dict:
 
 def _item_a_gui(i: dict, qty: int = 1) -> dict:
     """Convierte un dict de estado_inventario() al formato que espera la GUI."""
-    if i["es_captura"]:
+    if i.get("es_fragmento"):
+        tipo = "Fragmento"
+        icon = i.get("icono", "*")
+    elif i["es_captura"]:
         tipo = "Consumible"
         icon = "🪤"
     elif i["es_consumible"]:
@@ -124,6 +129,7 @@ def _item_a_gui(i: dict, qty: int = 1) -> dict:
         "type":        tipo,
         "qty":         qty,
         "price":       0,    # precio desconocido desde backend
+        "is_fragment":  i.get("es_fragmento", False),
         # referencia al nombre original para usar en backend
         "_backend_nombre": i["nombre"],
     }
@@ -207,7 +213,9 @@ class GameStateAdapter:
     # ── Exploración ──────────────────────────────────────────────────────────
 
     def explorar(self) -> str:
-        return self.juego.explorar()
+        msg = self.juego.explorar()
+        self.sync()
+        return msg
 
     def hay_criatura_encontrada(self) -> bool:
         return self.juego.hay_criatura_encontrada()
@@ -219,7 +227,9 @@ class GameStateAdapter:
         return self.juego.obtener_conexiones()
 
     def mover(self, direccion: str) -> str:
-        return self.juego.mover(direccion)
+        msg = self.juego.mover(direccion)
+        self.sync()
+        return msg
 
     # ── Combate ──────────────────────────────────────────────────────────────
 
@@ -227,9 +237,11 @@ class GameStateAdapter:
         return self.juego.iniciar_batalla()
 
     def ejecutar_turno(self, usar_item: bool = False,
-                       nombre_item: str = "") -> dict:
+                       nombre_item: str = "",
+                       nombre_habilidad: str = "") -> dict:
         resultado = self.juego.ejecutar_turno(usar_item=usar_item,
-                                               nombre_item=nombre_item)
+                                               nombre_item=nombre_item,
+                                               nombre_habilidad=nombre_habilidad)
         self.sync()
         return resultado
 
@@ -299,8 +311,25 @@ class GameStateAdapter:
         self.sync()
         return msg
 
+    def evolucionar_criatura(self, nombre_criatura: str) -> str:
+        msg = self.juego.evolucionar_criatura(nombre_criatura)
+        self.sync()
+        return msg
+
+    def habilidades_criatura_activa(self) -> list[dict]:
+        return self.juego.habilidades_criatura_activa()
+
     def set_active_creature(self, creature_gui: dict) -> None:
         """Marca como criatura activa la indicada por dict GUI."""
+        nombre = creature_gui.get("_backend_nombre", creature_gui.get("name", ""))
+        jugador = self.juego.jugador
+        if jugador is not None:
+            idx = next((i for i, c in enumerate(jugador.equipo)
+                        if c.nombre == nombre), None)
+            if idx is not None:
+                jugador.equipo.insert(0, jugador.equipo.pop(idx))
+                self.sync()
+                return
         self.active_creature = creature_gui
 
 

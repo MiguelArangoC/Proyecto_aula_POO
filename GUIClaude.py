@@ -518,7 +518,6 @@ class CreaturesScreen(tk.Frame):
 
         make_btn(btn_row, "⚔ Enviar a Combate", C["gold"],
                  lambda: self._set_active(creature))
-        # Bug 3 fix: evolución no implementada en backend
         make_btn(btn_row, "✨ Evolucionar", C["purple_light"],
                  lambda: self._evolve(creature))
         make_btn(btn_row, "🔀 Cruzar", C["green_light"],
@@ -530,12 +529,16 @@ class CreaturesScreen(tk.Frame):
                              f"{creature['name']} está lista para el combate.")
 
     def _evolve(self, creature):
-        # Bug 3 fix: mensaje honesto, sin mencionar polvo lunar inexistente
-        messagebox.showinfo(
-            "Evolución no disponible",
-            "El sistema de evolución aún no está implementado en el backend.\n"
-            "¡Próximamente en una futura entrega!"
-        )
+        try:
+            nombre = creature.get("_backend_nombre", creature["name"])
+            msg = self.app.state.evolucionar_criatura(nombre)
+            self.app.state.sync()
+            messagebox.showinfo("Evolución", msg)
+            self._refresh_list()
+            if self.app.state.active_creature:
+                self._show_detail(self.app.state.active_creature)
+        except Exception as e:
+            messagebox.showerror("No se pudo evolucionar", str(e))
 
     def _cross(self, creature):
         messagebox.showinfo("Cruce de Criaturas",
@@ -704,15 +707,26 @@ class CombatScreen(tk.Frame):
         self._update_battle_animation(player_hp, enemy_hp, c, self.enemy)
 
         if c and self.combat_active:
-            for skill in c.get("skills", []):
+            try:
+                skills = self.app.state.habilidades_criatura_activa()
+            except Exception:
+                skills = [{"nombre": s, "costo_mp": 0, "puede_usar": True}
+                          for s in c.get("skills", [])]
+            for skill in skills:
+                nombre = skill["nombre"]
+                costo = skill.get("costo_mp", 0)
+                puede_usar = skill.get("puede_usar", True)
+                texto = f"✦ {nombre}" if costo == 0 else f"✦ {nombre} ({costo} MP)"
                 sk_btn = tk.Button(
-                    self.skills_frame, text=f"✦ {skill}",
-                    command=lambda s=skill: self._use_skill(s),
+                    self.skills_frame, text=texto,
+                    command=lambda s=nombre: self._use_skill(s),
                     bg=C["bg_card"], fg=c["color"],
                     activebackground=C["bg_hover"], activeforeground=C["gold_light"],
                     font=FONTS["btn_sm"], relief="flat", bd=0,
                     pady=8, padx=10, cursor="hand2",
                 )
+                if not puede_usar:
+                    sk_btn.config(fg=C["text_dim"])
                 sk_btn.pack(side="left", padx=4)
 
     def _combatant_widget(self, parent, data, is_player):
@@ -747,6 +761,19 @@ class CombatScreen(tk.Frame):
         bar.set_ratio(hp / max_hp if max_hp else 0)
         tk.Label(hp_row, text=f"{hp}/{max_hp}", font=FONTS["body_sm"],
                  fg=C["text_mid"], bg=bg).pack(side="left")
+
+        if is_player and "mp" in data:
+            mp = data["mp"]
+            max_mp = data["max_mp"]
+            mp_row = tk.Frame(info, bg=bg)
+            mp_row.pack(fill="x", pady=2)
+            tk.Label(mp_row, text="MP", font=FONTS["stat"],
+                     fg=C["text_mid"], bg=bg, width=3).pack(side="left")
+            mp_bar = StatBar(mp_row, C["mp_fill"], width=160, height=14)
+            mp_bar.pack(side="left", padx=4)
+            mp_bar.set_ratio(mp / max_mp if max_mp else 0)
+            tk.Label(mp_row, text=f"{mp}/{max_mp}", font=FONTS["body_sm"],
+                     fg=C["text_mid"], bg=bg).pack(side="left")
 
         if "atk" in data:
             tk.Label(info, text=f"⚔ ATK {data['atk']}",
@@ -842,7 +869,7 @@ class CombatScreen(tk.Frame):
         if not self.combat_active:
             return
         try:
-            resultado = self.app.state.ejecutar_turno()
+            resultado = self.app.state.ejecutar_turno(nombre_habilidad=skill_name)
             for evento in resultado["log"]:
                 tag = "gold" if "Victoria" in evento or "XP" in evento \
                       else "red" if "daño" in evento.lower() or "falló" in evento.lower() \
@@ -1099,6 +1126,13 @@ class InventoryScreen(tk.Frame):
             return
 
         nombre_backend = item.get("_backend_nombre", item["name"])
+
+        if item.get("is_fragment") or item.get("type") == "Fragmento":
+            messagebox.showinfo(
+                "Fragmento de Evolución",
+                "Este fragmento se consume desde la pantalla de Criaturas con el botón Evolucionar."
+            )
+            return
 
         # Bug 2 fix: Trampas → redirigir a Combate
         if "trampa" in nombre_backend.lower() or nombre_backend == "Trampa Básica":
