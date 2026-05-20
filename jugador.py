@@ -54,6 +54,7 @@ class Jugador:
         self.inventario: list["Item"] = []
         self.posicion: str = posicion
         self.oro: int = max(0, int(oro))
+        self.criatura_combate: Optional[str] = None
 
     # ─────────────────────────────────────────
     # EQUIPO
@@ -79,13 +80,54 @@ class Jugador:
             )
         self.equipo.append(criatura)
 
+    def set_criatura_combate(self, nombre: str) -> None:
+        """
+        Marca la criatura que el jugador eligió para combatir.
+
+        Parámetros:
+            nombre (str): Nombre de la criatura en el equipo.
+
+        Lanza:
+            ValueError: Si la criatura no está en el equipo.
+        """
+        criatura = next((c for c in self.equipo if c.nombre == nombre), None)
+        if criatura is None:
+            raise ValueError(f"Criatura '{nombre}' no encontrada en el equipo.")
+        self.criatura_combate = nombre
+
+    def remover_criatura(self, nombre: str) -> None:
+        """
+        Elimina una criatura del equipo de forma voluntaria.
+
+        Parámetros:
+            nombre (str): Nombre de la criatura a liberar.
+
+        Lanza:
+            ValueError: Si no queda al menos una criatura o no se encuentra.
+        """
+        if len(self.equipo) <= 1:
+            raise ValueError("Debes conservar al menos una criatura en el equipo.")
+        criatura = next((c for c in self.equipo if c.nombre == nombre), None)
+        if criatura is None:
+            raise ValueError(f"Criatura '{nombre}' no encontrada en el equipo.")
+        self.equipo.remove(criatura)
+        if self.criatura_combate == nombre:
+            self.criatura_combate = None
+
     def criatura_activa(self) -> Optional["Criatura"]:
         """
-        Retorna la primera criatura del equipo que no esté debilitada.
+        Retorna la criatura seleccionada para combate si sigue disponible;
+        en caso contrario, la primera del equipo que no esté debilitada.
 
         Retorna:
             Optional[Criatura]: La criatura activa, o None si todas están debilitadas.
         """
+        if self.criatura_combate:
+            seleccionada = next(
+                (c for c in self.equipo if c.nombre == self.criatura_combate), None
+            )
+            if seleccionada is not None and not seleccionada.esta_debilitada():
+                return seleccionada
         for c in self.equipo:
             if not c.esta_debilitada():
                 return c
@@ -264,6 +306,7 @@ class Jugador:
             "nombre": self.nombre,
             "posicion": self.posicion,
             "oro": self.oro,
+            "criatura_combate": self.criatura_combate,
             "equipo": [
                 {
                     "nombre": c.nombre,
@@ -343,6 +386,7 @@ class Jugador:
             )
 
         jugador = cls(datos["nombre"], datos["posicion"], datos.get("oro", 0))
+        jugador.criatura_combate = datos.get("criatura_combate")
 
         for cd in datos["equipo"]:
             c = Criatura(

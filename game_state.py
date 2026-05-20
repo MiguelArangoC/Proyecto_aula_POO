@@ -434,6 +434,22 @@ class Juego:
         self.jugador.inventario.remove(fragmento)
         return msg
 
+    def set_criatura_combate(self, nombre_criatura: str) -> None:
+        """Marca la criatura que el jugador eligió para el combate."""
+        self._validar_jugador()
+        self.jugador.set_criatura_combate(nombre_criatura)
+
+    def liberar_criatura(self, nombre_criatura: str) -> str:
+        """
+        Elimina una criatura del equipo de forma voluntaria.
+
+        Retorna:
+            str: Mensaje de confirmación.
+        """
+        self._validar_jugador()
+        self.jugador.remover_criatura(nombre_criatura)
+        return f"{nombre_criatura} ha sido liberado del equipo."
+
     def habilidades_criatura_activa(self) -> list[dict]:
         """
         Retorna las habilidades de la criatura activa del jugador en formato dict.

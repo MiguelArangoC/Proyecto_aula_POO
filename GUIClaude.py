@@ -382,6 +382,7 @@ class CreaturesScreen(tk.Frame):
                                       highlightthickness=1)
         self.detail_frame.pack(side="left", fill="both", expand=True)
 
+        self._current_creature = None
         self._refresh_list()
         if self.app.state.creatures:
             self._show_detail(self.app.state.creatures[0])
@@ -429,6 +430,7 @@ class CreaturesScreen(tk.Frame):
             child.bind("<Button-1>", lambda _, c=creature: self._show_detail(c))
 
     def _show_detail(self, creature):
+        self._current_creature = creature
         for w in self.detail_frame.winfo_children():
             w.destroy()
 
@@ -539,11 +541,34 @@ class CreaturesScreen(tk.Frame):
                  lambda: self._evolve(creature))
         make_btn(btn_row, "🔀 Cruzar", C["green_light"],
                  lambda: self._go_cross(creature))
+        make_btn(btn_row, "🗑 Liberar", C["red_light"],
+                 lambda: self._release(creature))
 
     def _set_active(self, creature):
         self.app.state.set_active_creature(creature)
         messagebox.showinfo("Criatura activa",
                              f"{creature['name']} está lista para el combate.")
+
+    def _release(self, creature):
+        if len(self.app.state.creatures) <= 1:
+            messagebox.showwarning(
+                "No se puede liberar",
+                "Debes conservar al menos una criatura en el equipo.",
+            )
+            return
+        if not messagebox.askyesno(
+            "Confirmar liberación",
+            f"¿Liberar a {creature['name']}? Esta acción no se puede deshacer.",
+        ):
+            return
+        try:
+            msg = self.app.state.liberar_criatura(creature["_backend_nombre"])
+            messagebox.showinfo("Criatura liberada", msg)
+            self.refresh()
+        except ValueError as e:
+            messagebox.showwarning("No se puede liberar", str(e))
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
 
     def _evolve(self, creature):
         try:
@@ -569,7 +594,30 @@ class CreaturesScreen(tk.Frame):
                                  "Ve a la pantalla de Cruzas (🔀) para cruzar criaturas.")
 
     def refresh(self):
+        self.app.state.sync()
         self._refresh_list()
+        if self.app.state.creatures:
+            nombre = (
+                self._current_creature.get("_backend_nombre")
+                if self._current_creature else None
+            )
+            siguiente = next(
+                (c for c in self.app.state.creatures
+                 if c["_backend_nombre"] == nombre),
+                self.app.state.creatures[0],
+            )
+            self._show_detail(siguiente)
+        else:
+            self._current_creature = None
+            for w in self.detail_frame.winfo_children():
+                w.destroy()
+            tk.Label(
+                self.detail_frame,
+                text="No tienes criaturas en el equipo.",
+                font=FONTS["body"],
+                fg=C["text_dim"],
+                bg=C["bg_panel"],
+            ).pack(pady=40)
 
 
 # ══════════════════════════════════════════════════════════════

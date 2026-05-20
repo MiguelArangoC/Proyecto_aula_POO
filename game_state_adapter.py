@@ -192,7 +192,7 @@ class GameStateAdapter:
 
         self.creatures = [_criatura_a_gui(c) for c in equipo_raw]
 
-        # Mantener criatura activa
+        # Mantener criatura activa y sincronizar selección con el backend
         if self.active_creature:
             nombre = self.active_creature.get("_backend_nombre", "")
             nuevo = next(
@@ -201,6 +201,11 @@ class GameStateAdapter:
             self.active_creature = nuevo or (self.creatures[0] if self.creatures else None)
         elif self.creatures:
             self.active_creature = self.creatures[0]
+
+        if self.active_creature:
+            self.juego.set_criatura_combate(
+                self.active_creature["_backend_nombre"]
+            )
 
         # Inventario agrupado por nombre
         inv_raw = self.juego.estado_inventario()
@@ -371,7 +376,21 @@ class GameStateAdapter:
 
     def set_active_creature(self, creature_gui: dict) -> None:
         self.active_creature = creature_gui
+        nombre = creature_gui.get("_backend_nombre", "")
+        if nombre:
+            self.juego.set_criatura_combate(nombre)
         self.active_skills = self.juego.habilidades_criatura_activa()
+
+    def liberar_criatura(self, nombre_criatura: str) -> str:
+        """Elimina una criatura del equipo y actualiza el estado de la GUI."""
+        if (
+            self.active_creature
+            and self.active_creature.get("_backend_nombre") == nombre_criatura
+        ):
+            self.active_creature = None
+        msg = self.juego.liberar_criatura(nombre_criatura)
+        self.sync()
+        return msg
 
     # ── Habilidades ──────────────────────────────────────────────────────────
 
