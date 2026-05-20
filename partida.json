@@ -1,0 +1,276 @@
+{
+  "nombre": "hablalo",
+  "posicion": "Lago",
+  "oro": 100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,
+  "equipo": [
+    {
+      "nombre": "Torrente Furioso",
+      "tipo": "Agua",
+      "hp": 134,
+      "hp_max": 134,
+      "mp": 65,
+      "mp_max": 65,
+      "atk": 54,
+      "defensa": 16,
+      "velocidad": 13,
+      "precision": 0.9,
+      "nivel": 1,
+      "experiencia": 60,
+      "xp_siguiente": 100,
+      "forma": 1,
+      "habilidades": [
+        "Atacar",
+        "Squirt de Agua",
+        "Aura de Tormenta"
+      ],
+      "item_equipado": null
+    },
+    {
+      "nombre": "Ignis",
+      "tipo": "Fuego",
+      "hp": 0,
+      "hp_max": 110,
+      "mp": 40,
+      "mp_max": 40,
+      "atk": 64,
+      "defensa": 7,
+      "velocidad": 14,
+      "precision": 0.9,
+      "nivel": 2,
+      "experiencia": 140,
+      "xp_siguiente": 150,
+      "forma": 0,
+      "habilidades": [
+        "Atacar"
+      ],
+      "item_equipado": {
+        "nombre": "Amuleto de Fuego",
+        "descripcion": "Aumenta el ATK +10 pero reduce la DEF -5.",
+        "efecto_positivo": {
+          "atk": 10
+        },
+        "efecto_negativo": {
+          "defensa": 5
+        },
+        "es_consumible": false,
+        "es_captura": false
+      }
+    },
+    {
+      "nombre": "Voltex",
+      "tipo": "Rayo",
+      "hp": 108,
+      "hp_max": 108,
+      "mp": 43,
+      "mp_max": 43,
+      "atk": 69,
+      "defensa": 10,
+      "velocidad": 18,
+      "precision": 0.9,
+      "nivel": 3,
+      "experiencia": 170,
+      "xp_siguiente": 225,
+      "forma": 0,
+      "habilidades": [
+        "Atacar"
+      ],
+      "item_equipado": null
+    },
+    {
+      "nombre": "Rocafer",
+      "tipo": "Tierra",
+      "hp": 130,
+      "hp_max": 130,
+      "mp": 40,
+      "mp_max": 40,
+      "atk": 40,
+      "defensa": 18,
+      "velocidad": 8,
+      "precision": 0.9,
+      "nivel": 1,
+      "experiencia": 0,
+      "xp_siguiente": 100,
+      "forma": 0,
+      "habilidades": [
+        "Atacar"
+      ],
+      "item_equipado": null
+    }
+  ],
+  "inventario": [
+    {
+      "nombre": "Amuleto de Fuego",
+      "descripcion": "Aumenta el ATK +10 pero reduce la DEF -5.",
+      "efecto_positivo": {
+        "atk": 10
+      },
+      "efecto_negativo": {
+        "defensa": 5
+      },
+      "es_consumible": false,
+      "es_captura": false,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Amuleto de Fuego",
+      "descripcion": "Aumenta el ATK +10 pero reduce la DEF -5.",
+      "efecto_positivo": {
+        "atk": 10
+      },
+      "efecto_negativo": {
+        "defensa": 5
+      },
+      "es_consumible": false,
+      "es_captura": false,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Trampa Básica",
+      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "efecto_positivo": {},
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": true,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Trampa Básica",
+      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "efecto_positivo": {},
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": true,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Trampa Básica",
+      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "efecto_positivo": {},
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": true,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Trampa Básica",
+      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "efecto_positivo": {},
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": true,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Trampa Básica",
+      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "efecto_positivo": {},
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": true,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Trampa Básica",
+      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "efecto_positivo": {},
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": true,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Trampa Básica",
+      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "efecto_positivo": {},
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": true,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Trampa Básica",
+      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "efecto_positivo": {},
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": true,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Trampa Básica",
+      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "efecto_positivo": {},
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": true,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Trampa Básica",
+      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "efecto_positivo": {},
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": true,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Trampa Básica",
+      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "efecto_positivo": {},
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": true,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Trampa Básica",
+      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "efecto_positivo": {},
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": true,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Trampa Básica",
+      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "efecto_positivo": {},
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": true,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Trampa Básica",
+      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "efecto_positivo": {},
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": true,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Poción",
+      "descripcion": "Restaura 30 HP a la criatura equipada.",
+      "efecto_positivo": {
+        "hp": 30
+      },
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": false,
+      "es_fragmento": false
+    },
+    {
+      "nombre": "Poción",
+      "descripcion": "Restaura 30 HP a la criatura equipada.",
+      "efecto_positivo": {
+        "hp": 30
+      },
+      "efecto_negativo": {},
+      "es_consumible": true,
+      "es_captura": false,
+      "es_fragmento": false
+    }
+  ]
+}
