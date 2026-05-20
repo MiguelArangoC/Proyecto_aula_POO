@@ -325,6 +325,13 @@ class SideNav(tk.Frame):
         self.gold_label.pack(pady=(0, 12))
 
     def _save_game(self):
+        combat_scr = self.master._screens.get("combat") if hasattr(self.master, "_screens") else None
+        if combat_scr and combat_scr.combat_active:
+            messagebox.showwarning(
+                "Guardado deshabilitado",
+                "No puedes guardar la partida en mitad de un combate."
+            )
+            return
         try:
             self.app.state.guardar_partida()
             messagebox.showinfo("Partida Guardada",
@@ -852,6 +859,13 @@ class CombatScreen(tk.Frame):
             messagebox.showwarning("Sin criatura",
                                     "Selecciona una criatura activa primero.")
             return
+        if self.app.state.active_creature.get("status") == "Debilitada":
+            messagebox.showwarning(
+                "Criatura debilitada",
+                "Tu criatura activa está debilitada.\n\n"
+                "Cúrrala con una Poción desde el Inventario o cambia de criatura en la pantalla de Criaturas."
+            )
+            return
         try:
             msg = self.app.state.explorar()
             self._log(msg, "blue")
@@ -918,8 +932,40 @@ class CombatScreen(tk.Frame):
     def _capture_in_combat(self):
         if not self.combat_active:
             return
-        self._try_capture()
-        self._end_combat(victory=None)
+        items_cap = self.app.state.items_captura_disponibles()
+        if not items_cap:
+            messagebox.showwarning(
+                "Sin trampas",
+                "No tienes ninguna Trampa Básica en el inventario.\n"
+                "Cómprala en la Tienda (80g) e inténtalo de nuevo."
+            )
+            return
+            
+        try:
+            resultado = self.app.state.intentar_captura_en_batalla(items_cap[0])
+            for evento in resultado["log"]:
+                tag = (
+                    "gold"  if "Victoria" in evento or "capturado" in evento.lower() else
+                    "red"   if "daño" in evento.lower() or "falló" in evento.lower() or "escapó" in evento.lower() else
+                    "blue"  if "clima" in evento.lower() or "MP" in evento else
+                    ""
+                )
+                self._log(evento, tag)
+            
+            if resultado["exito"]:
+                messagebox.showinfo("¡Captura!", resultado["mensaje"])
+                self._end_combat(victory=True)
+            else:
+                messagebox.showinfo("Captura fallida", resultado["mensaje"])
+                self.enemy = self.app.state.criatura_enemiga_gui()
+                estado = resultado["estado"]
+                if estado == "DERROTA":
+                    self._log("═" * 30, "dim")
+                    self._end_combat(victory=False)
+                else:
+                    self._refresh_combatants()
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
 
     # ── Ataque con habilidad seleccionada ────────────────────────────────────
     def _attack(self):
@@ -993,7 +1039,7 @@ class CombatScreen(tk.Frame):
             pass
 
         self._refresh_combatants()
-        self._render_battle_canvas("Combate finalizado")
+        self._render_battle_canvas("Combate finalizado", player_data=self.app.state.active_creature)
 
     def _update_battle_animation(self, player_hp, enemy_hp, player_data, enemy_data):
         event = None
@@ -2073,6 +2119,13 @@ class MainScreen(tk.Frame):
 
     def show(self, key):
         if self._active_key == key:
+            return
+        combat_scr = self._screens.get("combat")
+        if combat_scr and combat_scr.combat_active:
+            messagebox.showwarning(
+                "Combate en curso",
+                "No puedes abandonar la arena de combate en mitad de una batalla."
+            )
             return
         if self._active_key and self._active_key in self._screens:
             self._screens[self._active_key].place_forget()

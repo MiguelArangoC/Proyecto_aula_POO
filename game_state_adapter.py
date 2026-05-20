@@ -321,6 +321,32 @@ class GameStateAdapter:
         self.sync()
         return msg
 
+    def intentar_captura_en_batalla(self, nombre_item: str) -> dict:
+        if not self.juego.batalla_activa:
+            raise RuntimeError("No hay batalla activa.")
+        log_antes = len(self.juego.batalla_activa.log)
+        
+        exito = False
+        msg = ""
+        try:
+            msg = self.juego.intentar_captura_en_batalla(nombre_item)
+            exito = True
+            nuevos_eventos = [msg]
+            estado_nombre = "VICTORIA"
+        except CapturaFallidaError as e:
+            exito = False
+            msg = str(e)
+            nuevos_eventos = self.juego.batalla_activa.log[log_antes:]
+            estado_nombre = self.juego.batalla_activa.estado.name
+        
+        self.sync()
+        return {
+            "exito": exito,
+            "mensaje": msg,
+            "log": nuevos_eventos,
+            "estado": estado_nombre
+        }
+
     def items_captura_disponibles(self) -> list[str]:
         return self.juego.items_captura_disponibles()
 

@@ -159,6 +159,8 @@ class Juego:
 
     def mover(self, direccion: str) -> str:
         self._validar_jugador()
+        if self.batalla_activa and self.batalla_activa.estado == EstadoBatalla.EN_CURSO:
+            raise RuntimeError("No puedes moverte de zona mientras estés en combate.")
         conexiones = self.obtener_conexiones()
         if direccion not in conexiones:
             raise ValueError(
@@ -307,7 +309,61 @@ class Juego:
             self.criatura_encontrada = None
             return f"¡{nombre} fue capturado y se unió a tu equipo!"
         except CapturaFallidaError:
+            if not self.hay_batalla_activa():
+                self.criatura_encontrada = None
+            raise
+
+    def intentar_captura_en_batalla(self, nombre_item_captura: str) -> str:
+        self._validar_jugador()
+        if self.batalla_activa is None:
+            raise RuntimeError("No hay batalla activa.")
+        if self.criatura_encontrada is None:
+            raise RuntimeError("No hay criatura salvaje para capturar.")
+
+        try:
+            self.jugador.capturar_criatura(self.criatura_encontrada, nombre_item_captura)
+            nombre = self.criatura_encontrada.nombre
             self.criatura_encontrada = None
+            self.batalla_activa.estado = EstadoBatalla.VICTORIA
+            self.batalla_activa._registrar(f"¡{nombre} fue capturado y se unió a tu equipo!")
+            msg = f"¡{nombre} fue capturado y se unió a tu equipo!"
+            self.batalla_activa = None
+            return msg
+        except CapturaFallidaError as e:
+            # Si falla, consume el turno del jugador y el enemigo ataca.
+            self.batalla_activa._registrar(f"[Turno {self.batalla_activa.turno}] Intento de captura de {self.criatura_encontrada.nombre} con {nombre_item_captura} falló.")
+            
+            criatura_jugador = self.jugador.criatura_activa()
+            if criatura_jugador is None:
+                self.batalla_activa.estado = EstadoBatalla.DERROTA
+                raise
+
+            # 1. Recuperar MP del jugador
+            criatura_jugador.recuperar_mp_turno()
+
+            # 2. Daño climático
+            dano_j = self.batalla_activa.condicion_climatica.aplicar_dano_turno(criatura_jugador)
+            dano_e = self.batalla_activa.condicion_climatica.aplicar_dano_turno(self.batalla_activa.enemigo)
+            if dano_j:
+                self.batalla_activa._registrar(
+                    f"El clima {self.batalla_activa.condicion_climatica.nombre} hace "
+                    f"{dano_j} de daño a {criatura_jugador.nombre}."
+                )
+            if dano_e:
+                self.batalla_activa._registrar(
+                    f"El clima {self.batalla_activa.condicion_climatica.nombre} hace "
+                    f"{dano_e} de daño a {self.batalla_activa.enemigo.nombre}."
+                )
+
+            # Verificar si alguien murió por clima
+            if not self.batalla_activa._verificar_fin():
+                # 3. El enemigo ataca
+                self.batalla_activa._turno_enemigo(criatura_jugador)
+                self.batalla_activa._verificar_fin()
+
+            # Limpiar estado temporal de esquiva
+            criatura_jugador.limpiar_estado_turno()
+            self.batalla_activa.turno += 1
             raise
 
     # ─────────────────────────────────────────
