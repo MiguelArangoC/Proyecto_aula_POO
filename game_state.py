@@ -16,8 +16,19 @@ Cambios en esta versión
 """
 
 from __future__ import annotations
+import os
 import random
+import sys
 from typing import Optional
+
+
+def ruta_partida_default() -> str:
+    """Ruta de partida.json junto al .exe (PyInstaller) o al proyecto."""
+    if getattr(sys, "frozen", False):
+        base = os.path.dirname(sys.executable)
+    else:
+        base = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base, "partida.json")
 
 from criatura import Criatura
 from jugador import Jugador
@@ -555,12 +566,14 @@ class Juego:
     # RF10 — GUARDAR Y CARGAR PARTIDA
     # ─────────────────────────────────────────
 
-    def guardar_partida(self, ruta: str = "partida.json") -> str:
+    def guardar_partida(self, ruta: str | None = None) -> str:
+        ruta = ruta or ruta_partida_default()
         self._validar_jugador()
         self.jugador.guardar(ruta)
         return f"Partida guardada en '{ruta}'."
 
-    def cargar_partida(self, ruta: str = "partida.json") -> str:
+    def cargar_partida(self, ruta: str | None = None) -> str:
+        ruta = ruta or ruta_partida_default()
         self.jugador = Jugador.cargar(ruta)
         self.batalla_activa = None
         self.criatura_encontrada = None
@@ -577,6 +590,6 @@ class Juego:
         if self.jugador is None:
             raise RuntimeError("No hay jugador creado. Llama a crear_jugador() primero.")
 
-    def hay_partida_guardada(self, ruta: str = "partida.json") -> bool:
-        import os
+    def hay_partida_guardada(self, ruta: str | None = None) -> bool:
+        ruta = ruta or ruta_partida_default()
         return os.path.isfile(ruta)

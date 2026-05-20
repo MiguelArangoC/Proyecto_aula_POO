@@ -234,16 +234,16 @@ class GameStateAdapter:
         self.sync()
         return msg
 
-    def cargar_partida(self, ruta: str = "partida.json") -> str:
+    def cargar_partida(self, ruta: str | None = None) -> str:
         msg = self.juego.cargar_partida(ruta)
         self.player_name = self.juego.jugador.nombre
         self.sync()
         return msg
 
-    def guardar_partida(self, ruta: str = "partida.json") -> str:
+    def guardar_partida(self, ruta: str | None = None) -> str:
         return self.juego.guardar_partida(ruta)
 
-    def hay_partida_guardada(self, ruta: str = "partida.json") -> bool:
+    def hay_partida_guardada(self, ruta: str | None = None) -> bool:
         return self.juego.hay_partida_guardada(ruta)
 
     # ── Exploración ──────────────────────────────────────────────────────────

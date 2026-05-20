@@ -95,7 +95,25 @@ graph TD
 
 ## Ejecución y Requisitos
 
-Para iniciar el juego, ejecuta el siguiente comando en tu terminal:
+### Interfaz gráfica (recomendado)
+
+```bash
+python GUIClaude.py
+```
+
+### Ejecutable (.exe) con PyInstaller
+
+1. Instala PyInstaller: `pip install pyinstaller`
+2. En la carpeta del proyecto, ejecuta `build_exe.bat` o:
+
+```bash
+pyinstaller --clean --noconfirm CriaturasPOO.spec
+```
+
+3. Abre `dist\CriaturasPOO.exe` (no requiere Python instalado).
+4. La partida guardada se crea como `partida.json` en la misma carpeta que el `.exe`.
+
+### Consola (motor base)
 
 ```bash
 python game_state.py
