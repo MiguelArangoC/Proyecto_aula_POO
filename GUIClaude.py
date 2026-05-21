@@ -1086,6 +1086,20 @@ class CombatScreen(tk.Frame):
         except Exception:
             pass
 
+        # Notificación de resultado
+        if victory is True:
+            messagebox.showinfo(
+                "⚔ ¡Victoria!",
+                "¡Has derrotado al enemigo!\nTu criatura ganó experiencia."
+            )
+        elif victory is False:
+            messagebox.showwarning(
+                "💀 Derrota",
+                "Todas tus criaturas han sido debilitadas.\n"
+                "Usa Pociones desde el Inventario para recuperarlas."
+            )
+        # victory == None → retirada, sin popup (ya queda registrado en el log)
+
         self._refresh_combatants()
         self._render_battle_canvas("Combate finalizado", player_data=self.app.state.active_creature)
 
