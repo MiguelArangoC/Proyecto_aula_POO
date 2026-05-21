@@ -593,3 +593,4 @@ class Juego:
     def hay_partida_guardada(self, ruta: str | None = None) -> bool:
         ruta = ruta or ruta_partida_default()
         return os.path.isfile(ruta)
+#POR FIIIIIIIIIIIIIIIIIIIIIIIIIIIIN 
