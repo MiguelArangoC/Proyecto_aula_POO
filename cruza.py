@@ -472,8 +472,9 @@ def cruzar(padre_a: "Criatura", padre_b: "Criatura") -> ResultadoCruza:
         else datos["nombre_base"]
     )
 
-    # — Crear hijo como Criatura con tipo Normal (se sobrescribe) —
-    # Necesitamos agregar el tipo resultado al sistema de tipos
+    # — Crear la criatura hijo con su tipo híbrido real —
+    # _resolver_tipo_gui() retorna el tipo de cruza directamente, ya que
+    # todos los tipos híbridos (Vapor, Magma, etc.) están registrados en tipo.py.
     tipo_hijo_str = _resolver_tipo_gui(tipo_resultado)
 
     hijo = Criatura(
@@ -551,25 +552,24 @@ def cruzar(padre_a: "Criatura", padre_b: "Criatura") -> ResultadoCruza:
 
 def _resolver_tipo_gui(tipo_resultado: str) -> str:
     """
-    Mapea el tipo de cruza a uno de los tipos válidos del sistema
-    para que Criatura() no lance ValueError.
-    Los tipos de cruza se tratan como 'Normal' internamente pero
-    conservan su identidad en _tipo_cruza.
+    Retorna el tipo elemental real de la criatura de cruza.
+
+    Todos los tipos híbridos (Vapor, Magma, Choque Térmico, Plasma, Pantano,
+    Escarcha, Tormenta, Cristal, Metal, Aurora) están registrados en tipo.py
+    como tipos completamente válidos con su propia tabla de multiplicadores,
+    por lo que se retorna el nombre de cruza directamente.
+
+    Parámetros:
+        tipo_resultado (str): El tipo de cruza tal como aparece en TABLA_CRUZAS.
+
+    Retorna:
+        str: El mismo tipo_resultado si es válido; 'Normal' como último recurso.
     """
-    # Mapa opcional: si en el futuro se amplía tipo.py
-    _MAPA = {
-        "Vapor":          "Agua",
-        "Magma":          "Fuego",
-        "Choque Térmico": "Fuego",
-        "Plasma":         "Rayo",
-        "Pantano":        "Tierra",
-        "Escarcha":       "Agua",
-        "Tormenta":       "Rayo",
-        "Cristal":        "Tierra",
-        "Metal":          "Tierra",
-        "Aurora":         "Rayo",
-    }
-    return _MAPA.get(tipo_resultado, "Normal")
+    from tipo import TIPOS_VALIDOS
+    if tipo_resultado in TIPOS_VALIDOS:
+        return tipo_resultado
+    # Fallback de seguridad (no debería ocurrir con las cruzas definidas)
+    return "Normal"
 
 
 _habilidades_registradas = False
