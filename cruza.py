@@ -473,13 +473,10 @@ def cruzar(padre_a: "Criatura", padre_b: "Criatura") -> ResultadoCruza:
     )
 
     # — Crear la criatura hijo con su tipo híbrido real —
-    # _resolver_tipo_gui() retorna el tipo de cruza directamente, ya que
-    # todos los tipos híbridos (Vapor, Magma, etc.) están registrados en tipo.py.
-    tipo_hijo_str = _resolver_tipo_gui(tipo_resultado)
-
+    # tipo_resultado (ej. "Vapor", "Plasma") es un tipo válido registrado en tipo.py.
     hijo = Criatura(
         nombre=nombre_hijo,
-        tipo=tipo_hijo_str,
+        tipo=tipo_resultado,
         hp=hp_base,
         atk=atk_base,
         defensa=def_base,
@@ -549,28 +546,6 @@ def cruzar(padre_a: "Criatura", padre_b: "Criatura") -> ResultadoCruza:
 # ─────────────────────────────────────────
 # UTILIDADES
 # ─────────────────────────────────────────
-
-def _resolver_tipo_gui(tipo_resultado: str) -> str:
-    """
-    Retorna el tipo elemental real de la criatura de cruza.
-
-    Todos los tipos híbridos (Vapor, Magma, Choque Térmico, Plasma, Pantano,
-    Escarcha, Tormenta, Cristal, Metal, Aurora) están registrados en tipo.py
-    como tipos completamente válidos con su propia tabla de multiplicadores,
-    por lo que se retorna el nombre de cruza directamente.
-
-    Parámetros:
-        tipo_resultado (str): El tipo de cruza tal como aparece en TABLA_CRUZAS.
-
-    Retorna:
-        str: El mismo tipo_resultado si es válido; 'Normal' como último recurso.
-    """
-    from tipo import TIPOS_VALIDOS
-    if tipo_resultado in TIPOS_VALIDOS:
-        return tipo_resultado
-    # Fallback de seguridad (no debería ocurrir con las cruzas definidas)
-    return "Normal"
-
 
 _habilidades_registradas = False
 
