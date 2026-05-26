@@ -240,7 +240,7 @@ classDiagram
 
 *Adicionalmente, se puede consultar el diagrama UML de relaciones:*
 
-![Diagrama UML](docs/diagrama_uml.png)
+![Diagrama UML](docs/POOProyect_v4.png)
 
 ---
 
