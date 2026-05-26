@@ -7,13 +7,12 @@ Cambios en esta versión
 -----------------------
   - cruzar_criaturas(): invoca cruza.cruzar() y agrega el hijo al equipo.
   - combinaciones_cruza(): expone la tabla completa para el panel de cruzas.
-  - _criatura_a_gui() soporta criaturas de cruza (_es_cruza, _tipo_cruza, etc.).
+  - criatura_a_gui() soporta criaturas de cruza (_es_cruza, _tipo_cruza, etc.).
   - estado_inventario() incluye fragmentos en el inventario GUI.
   - ejecutar_turno() pasa nombre_habilidad al backend.
   - habilidades_criatura_activa(): expone habilidades reales con estado de MP.
 """
 
-from __future__ import annotations
 from game_state import Juego, CATALOGO_ITEMS, _crear_item
 from excepciones import (
     EquipoLlenoError, CapturaFallidaError,
@@ -73,7 +72,7 @@ SHOP_ITEMS = [
 ]
 
 
-def _criatura_a_gui(c: dict) -> dict:
+def criatura_a_gui(c):
     """Convierte un dict de estado_equipo() al formato que espera la GUI."""
     tipo = c["tipo"]
     # Criaturas de cruza tienen icono/color especiales
@@ -107,7 +106,7 @@ def _criatura_a_gui(c: dict) -> dict:
     }
 
 
-def _item_a_gui(i: dict, qty: int = 1) -> dict:
+def item_a_gui(i, qty=1):
     """Convierte un dict de estado_inventario() al formato que espera la GUI."""
     # Fragmentos de evolución
     if i.get("es_fragmento"):
@@ -158,19 +157,19 @@ class GameStateAdapter:
 
     SHOP_ITEMS = SHOP_ITEMS
 
-    def __init__(self) -> None:
-        self.juego: Juego           = Juego()
-        self.player_name: str       = ""
-        self.gold: int              = 0
-        self.active_creature: dict | None = None
-        self.creatures: list[dict]  = []
-        self.inventory: list[dict]  = []
+    def __init__(self):
+        self.juego           = Juego()
+        self.player_name     = ""
+        self.gold            = 0
+        self.active_creature = None
+        self.creatures       = []
+        self.inventory       = []
         # Cache de habilidades de la criatura activa (actualizado en sync)
-        self.active_skills: list[dict] = []
+        self.active_skills   = []
 
     # ── Sincronización ───────────────────────────────────────────────────────
 
-    def sync(self) -> None:
+    def sync(self):
         """Actualiza creatures, inventory y active_skills desde el backend."""
         if self.juego.jugador is None:
             return
@@ -181,16 +180,16 @@ class GameStateAdapter:
         equipo_raw = self.juego.estado_equipo()
         # Enriquecer dicts con metadata de cruza si aplica
         for i, c_obj in enumerate(self.juego.jugador.equipo):
-            if getattr(c_obj, "_es_cruza", False):
+            if getattr(c_obj, "es_cruza", False):
                 equipo_raw[i]["es_cruza"]     = True
-                equipo_raw[i]["es_mutacion"]  = getattr(c_obj, "_es_mutacion", False)
-                equipo_raw[i]["tipo_cruza"]   = getattr(c_obj, "_tipo_cruza", "")
-                equipo_raw[i]["icono_cruza"]  = getattr(c_obj, "_icono_cruza", "")
-                equipo_raw[i]["color_cruza"]  = getattr(c_obj, "_color_cruza", "")
-                equipo_raw[i]["afinidad"]     = getattr(c_obj, "_afinidad", "")
-                equipo_raw[i]["desc_afinidad"]= getattr(c_obj, "_desc_afinidad", "")
+                equipo_raw[i]["es_mutacion"]  = getattr(c_obj, "es_mutacion", False)
+                equipo_raw[i]["tipo_cruza"]   = getattr(c_obj, "tipo_cruza", "")
+                equipo_raw[i]["icono_cruza"]  = getattr(c_obj, "icono_cruza", "")
+                equipo_raw[i]["color_cruza"]  = getattr(c_obj, "color_cruza", "")
+                equipo_raw[i]["afinidad"]     = getattr(c_obj, "afinidad", "")
+                equipo_raw[i]["desc_afinidad"]= getattr(c_obj, "desc_afinidad", "")
 
-        self.creatures = [_criatura_a_gui(c) for c in equipo_raw]
+        self.creatures = [criatura_a_gui(c) for c in equipo_raw]
 
         # Mantener criatura activa y sincronizar selección con el backend
         if self.active_creature:
@@ -218,64 +217,57 @@ class GameStateAdapter:
         for i in inv_raw:
             if i["nombre"] not in visto:
                 visto.add(i["nombre"])
-                self.inventory.append(_item_a_gui(i, conteo[i["nombre"]]))
+                self.inventory.append(item_a_gui(i, conteo[i["nombre"]]))
 
         # Habilidades de la criatura activa
         self.active_skills = self.juego.habilidades_criatura_activa()
 
     # ── Acciones del jugador ─────────────────────────────────────────────────
 
-    def crear_jugador(
-        self, nombre: str, criatura_inicial: str = "Ignis", oro_inicial: int = 200
-    ) -> str:
+    def crear_jugador(self, nombre, criatura_inicial="Ignis", oro_inicial=200):
         msg = self.juego.crear_jugador(nombre, criatura_inicial=criatura_inicial,
                                         oro_inicial=oro_inicial)
         self.player_name = nombre
         self.sync()
         return msg
 
-    def cargar_partida(self, ruta: str | None = None) -> str:
+    def cargar_partida(self, ruta=None):
         msg = self.juego.cargar_partida(ruta)
         self.player_name = self.juego.jugador.nombre
         self.sync()
         return msg
 
-    def guardar_partida(self, ruta: str | None = None) -> str:
+    def guardar_partida(self, ruta=None):
         return self.juego.guardar_partida(ruta)
 
-    def hay_partida_guardada(self, ruta: str | None = None) -> bool:
+    def hay_partida_guardada(self, ruta=None):
         return self.juego.hay_partida_guardada(ruta)
 
     # ── Exploración ──────────────────────────────────────────────────────────
 
-    def explorar(self) -> str:
+    def explorar(self):
         msg = self.juego.explorar()
         self.sync()   # sync para reflejar posible fragmento en inventario
         return msg
 
-    def hay_criatura_encontrada(self) -> bool:
+    def hay_criatura_encontrada(self):
         return self.juego.hay_criatura_encontrada()
 
-    def info_zona_actual(self) -> dict:
+    def info_zona_actual(self):
         return self.juego.info_zona_actual()
 
-    def obtener_conexiones(self) -> dict:
+    def obtener_conexiones(self):
         return self.juego.obtener_conexiones()
 
-    def mover(self, direccion: str) -> str:
+    def mover(self, direccion):
         return self.juego.mover(direccion)
 
     # ── Combate ──────────────────────────────────────────────────────────────
 
-    def iniciar_batalla(self) -> str:
+    def iniciar_batalla(self):
         return self.juego.iniciar_batalla()
 
-    def ejecutar_turno(
-        self,
-        usar_item: bool = False,
-        nombre_item: str = "",
-        nombre_habilidad: str = "",
-    ) -> dict:
+    def ejecutar_turno(self, usar_item=False, nombre_item="", nombre_habilidad=""):
         resultado = self.juego.ejecutar_turno(
             usar_item=usar_item,
             nombre_item=nombre_item,
@@ -284,15 +276,15 @@ class GameStateAdapter:
         self.sync()
         return resultado
 
-    def retirarse(self) -> str:
+    def retirarse(self):
         msg = self.juego.retirarse()
         self.sync()
         return msg
 
-    def hay_batalla_activa(self) -> bool:
+    def hay_batalla_activa(self):
         return self.juego.hay_batalla_activa()
 
-    def criatura_enemiga_gui(self) -> dict | None:
+    def criatura_enemiga_gui(self):
         ce = None
         if self.juego.batalla_activa:
             ce = self.juego.batalla_activa.enemigo
@@ -313,7 +305,7 @@ class GameStateAdapter:
             "skills":  [],
         }
 
-    def clima_batalla_actual(self) -> str:
+    def clima_batalla_actual(self):
         if self.juego.batalla_activa:
             return self.juego.batalla_activa.condicion_climatica.nombre
         zona = self.juego.mapa.obtener_zona(self.juego.jugador.posicion)
@@ -321,14 +313,14 @@ class GameStateAdapter:
 
     # ── Captura ──────────────────────────────────────────────────────────────
 
-    def capturar(self, nombre_item: str) -> str:
+    def capturar(self, nombre_item):
         msg = self.juego.capturar(nombre_item)
         self.sync()
         return msg
 
-    def intentar_captura_en_batalla(self, nombre_item: str) -> dict:
+    def intentar_captura_en_batalla(self, nombre_item):
         if not self.juego.batalla_activa:
-            raise RuntimeError("No hay batalla activa.")
+            raise ValueError("No hay batalla activa.")
         log_antes = len(self.juego.batalla_activa.log)
         
         exito = False
@@ -352,12 +344,12 @@ class GameStateAdapter:
             "estado": estado_nombre
         }
 
-    def items_captura_disponibles(self) -> list[str]:
+    def items_captura_disponibles(self):
         return self.juego.items_captura_disponibles()
 
     # ── Ítems / equipo ───────────────────────────────────────────────────────
 
-    def equipar_item(self, nombre_criatura: str, nombre_item: str) -> str:
+    def equipar_item(self, nombre_criatura, nombre_item):
         idx = next(
             (i for i, c in enumerate(self.juego.jugador.equipo)
              if c.nombre == nombre_criatura),
@@ -369,19 +361,19 @@ class GameStateAdapter:
         self.sync()
         return msg
 
-    def agregar_item_inventario(self, nombre_item: str) -> str:
+    def agregar_item_inventario(self, nombre_item):
         msg = self.juego.agregar_item_inventario(nombre_item)
         self.sync()
         return msg
 
-    def set_active_creature(self, creature_gui: dict) -> None:
+    def set_active_creature(self, creature_gui):
         self.active_creature = creature_gui
         nombre = creature_gui.get("_backend_nombre", "")
         if nombre:
             self.juego.set_criatura_combate(nombre)
         self.active_skills = self.juego.habilidades_criatura_activa()
 
-    def liberar_criatura(self, nombre_criatura: str) -> str:
+    def liberar_criatura(self, nombre_criatura):
         """Elimina una criatura del equipo y actualiza el estado de la GUI."""
         if (
             self.active_creature
@@ -394,32 +386,28 @@ class GameStateAdapter:
 
     # ── Habilidades ──────────────────────────────────────────────────────────
 
-    def habilidades_criatura_activa(self) -> list[dict]:
+    def habilidades_criatura_activa(self):
         """Habilidades de la criatura activa con estado de MP."""
         return self.juego.habilidades_criatura_activa()
 
     # ── Evolución ────────────────────────────────────────────────────────────
 
-    def evolucionar_criatura(self, nombre_criatura: str) -> str:
+    def evolucionar_criatura(self, nombre_criatura):
         msg = self.juego.evolucionar_criatura(nombre_criatura)
         self.sync()
         return msg
 
     # ── Cruzas ───────────────────────────────────────────────────────────────
 
-    def cruzar_criaturas(self, nombre_a: str, nombre_b: str) -> str:
+    def cruzar_criaturas(self, nombre_a, nombre_b):
         """
         Cruza dos criaturas del equipo del jugador.
-
         Retorna el mensaje descriptivo del resultado.
-
-        Lanza:
-            ValueError: Si no se encuentra alguna criatura o la combinación no existe.
-            EquipoLlenoError: Si el equipo ya tiene 6 criaturas.
+        Lanza ValueError si la combinación no existe, o EquipoLlenoError si el equipo está lleno.
         """
         jugador = self.juego.jugador
         if jugador is None:
-            raise RuntimeError("No hay jugador activo.")
+            raise ValueError("No hay jugador activo.")
 
         padre_a = next((c for c in jugador.equipo if c.nombre == nombre_a), None)
         padre_b = next((c for c in jugador.equipo if c.nombre == nombre_b), None)
@@ -431,20 +419,19 @@ class GameStateAdapter:
         if padre_a is padre_b:
             raise ValueError("No puedes cruzar una criatura consigo misma.")
 
-        resultado: ResultadoCruza = cruzar(padre_a, padre_b)
+        resultado = cruzar(padre_a, padre_b)
         jugador.agregar_criatura(resultado.criatura)
         self.sync()
         return resultado.mensaje
 
-    def combinaciones_cruza(self) -> list[dict]:
+    def combinaciones_cruza(self):
         """Retorna la tabla completa de combinaciones posibles."""
         return combinaciones_disponibles()
 
-    def puede_cruzar(self, nombre_a: str, nombre_b: str) -> tuple[bool, str]:
+    def puede_cruzar(self, nombre_a, nombre_b):
         """
         Verifica si dos criaturas del equipo pueden cruzarse sin hacer la cruza.
-
-        Retorna (True, "") o (False, motivo).
+        Retorna (True, "") si pueden, o (False, motivo) si no.
         """
         from cruza import TABLA_CRUZAS
         jugador = self.juego.jugador
@@ -456,11 +443,11 @@ class GameStateAdapter:
             return False, "Una o ambas criaturas no están en el equipo."
         if padre_a is padre_b:
             return False, "No puedes cruzar una criatura consigo misma."
-        from frozenset import frozenset  # ya está en builtins
+        # frozenset es un builtin de Python, no se importa de ningún módulo
         clave = frozenset({padre_a.tipo.nombre, padre_b.tipo.nombre})
         if clave not in TABLA_CRUZAS:
             return False, (
-                f"No existe cruza para {padre_a.tipo.nombre} × {padre_b.tipo.nombre}."
+                f"No existe cruza para {padre_a.tipo.nombre} x {padre_b.tipo.nombre}."
             )
         if len(jugador.equipo) >= 6:
             return False, "El equipo ya tiene 6 criaturas. Libera una primero."
@@ -468,7 +455,7 @@ class GameStateAdapter:
 
     # ── Mapa ─────────────────────────────────────────────────────────────────
 
-    def mapa_mundo(self) -> dict[str, dict]:
+    def mapa_mundo(self):
         return {
             nombre: {
                 "nombre":             zona.nombre,
@@ -479,7 +466,7 @@ class GameStateAdapter:
             for nombre, zona in self.juego.mapa.zonas.items()
         }
 
-    def mini_mapa(self) -> str:
+    def mini_mapa(self):
         return self.juego.mini_mapa()
 
 

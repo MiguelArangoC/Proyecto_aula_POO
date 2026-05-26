@@ -3,67 +3,44 @@ fragmento.py
 ============
 Define la clase FragmentoEvolucion, ítem especial que se obtiene
 explorando ciertas zonas del mapa y que permite evolucionar criaturas.
-
-Cada criatura necesita un fragmento específico según su tipo elemental.
-Los fragmentos se encuentran en zonas de mayor dificultad al explorar,
-con una probabilidad reducida respecto a los encuentros de criaturas.
-
-Relación zona → fragmento (definida también en mapa.py):
-  Volcán        → Fragmento de Llama    (para Ignis)
-  Lago          → Fragmento de Marea    (para Torrente)
-  Cueva de Roca → Fragmento de Tierra   (para Rocafer)
-
-Los fragmentos se almacenan en el inventario del jugador como cualquier
-otro ítem, pero con es_consumible=True y es_captura=False.
 """
 
-from __future__ import annotations
-
-
-# ─────────────────────────────────────────
-# CATÁLOGO DE FRAGMENTOS
-# ─────────────────────────────────────────
-
-CATALOGO_FRAGMENTOS: dict[str, dict] = {
+# Catálogo de fragmentos disponibles en el juego
+CATALOGO_FRAGMENTOS = {
     "Fragmento de Llama": {
-        "descripcion": "Cristal incandescente hallado en el Volcán. Permite evolucionar a Ignis.",
+        "descripcion":   "Cristal incandescente hallado en el Volcán. Permite evolucionar a Ignis.",
         "tipo_criatura": "Fuego",
-        "icono": "🔶",
-        "zona_origen": "Volcán",
-        "precio_gui": 0,
+        "icono":         "🔶",
+        "zona_origen":   "Volcán",
     },
     "Fragmento de Marea": {
-        "descripcion": "Gema marina hallada en el Lago. Permite evolucionar a Torrente.",
+        "descripcion":   "Gema marina hallada en el Lago. Permite evolucionar a Torrente.",
         "tipo_criatura": "Agua",
-        "icono": "🔷",
-        "zona_origen": "Lago",
-        "precio_gui": 0,
+        "icono":         "🔷",
+        "zona_origen":   "Lago",
     },
     "Fragmento de Tierra": {
-        "descripcion": "Núcleo pétreo hallado en la Cueva de Roca. Permite evolucionar a Rocafer.",
+        "descripcion":   "Núcleo pétreo hallado en la Cueva de Roca. Permite evolucionar a Rocafer.",
         "tipo_criatura": "Tierra",
-        "icono": "🟫",
-        "zona_origen": "Cueva de Roca",
-        "precio_gui": 0,
+        "icono":         "🟫",
+        "zona_origen":   "Cueva de Roca",
     },
     "Fragmento de Trueno": {
-        "descripcion": "Cristal electrico hallado en la Cumbre Nevada. Permite evolucionar a Voltex.",
+        "descripcion":   "Cristal eléctrico hallado en la Cumbre Nevada. Permite evolucionar a Voltex.",
         "tipo_criatura": "Rayo",
-        "icono": "⚡",
-        "zona_origen": "Cumbre Nevada",
-        "precio_gui": 0,
+        "icono":         "⚡",
+        "zona_origen":   "Cumbre Nevada",
     },
     "Fragmento de Escarcha": {
-        "descripcion": "Gema helada hallada en la Cumbre Nevada. Permite evolucionar a Glacius.",
+        "descripcion":   "Gema helada hallada en la Cumbre Nevada. Permite evolucionar a Glacius.",
         "tipo_criatura": "Hielo",
-        "icono": "*",
-        "zona_origen": "Cumbre Nevada",
-        "precio_gui": 0,
+        "icono":         "❄️",
+        "zona_origen":   "Cumbre Nevada",
     },
 }
 
-# Probabilidad de drop al explorar (independiente del encuentro de criatura)
-PROBABILIDAD_DROP_FRAGMENTO: float = 0.25   # 25% al explorar la zona correcta
+# Probabilidad de encontrar un fragmento al explorar la zona correcta
+PROBABILIDAD_DROP_FRAGMENTO = 0.25
 
 
 class FragmentoEvolucion:
@@ -71,45 +48,32 @@ class FragmentoEvolucion:
     Representa un fragmento de evolución obtenido explorando.
 
     No es una subclase de Item para mantener la separación de conceptos,
-    pero el adaptador lo serializa como ítem del inventario al sincroni-
-    zar con la GUI (tipo 'Material', no consumible, no captura).
-
-    Atributos:
-        nombre (str):        Nombre del fragmento.
-        descripcion (str):   Texto para la GUI.
-        tipo_criatura (str): Tipo elemental de la criatura que puede evolucionar con él.
-        icono (str):         Emoji para la GUI.
-        zona_origen (str):   Zona donde se puede encontrar.
+    pero tiene los mismos atributos básicos para poder guardarse en el
+    inventario del jugador junto a los ítems normales.
     """
 
-    def __init__(self, nombre: str) -> None:
-        """
-        Crea un fragmento desde el catálogo.
-
-        Lanza:
-            KeyError: Si el nombre no existe en CATALOGO_FRAGMENTOS.
-        """
+    def __init__(self, nombre):
         if nombre not in CATALOGO_FRAGMENTOS:
             raise KeyError(
                 f"Fragmento '{nombre}' no existe. "
                 f"Disponibles: {list(CATALOGO_FRAGMENTOS.keys())}"
             )
         datos = CATALOGO_FRAGMENTOS[nombre]
-        self.nombre: str = nombre
-        self.descripcion: str = datos["descripcion"]
-        self.tipo_criatura: str = datos["tipo_criatura"]
-        self.icono: str = datos["icono"]
-        self.zona_origen: str = datos["zona_origen"]
+        self.nombre          = nombre
+        self.descripcion     = datos["descripcion"]
+        self.tipo_criatura   = datos["tipo_criatura"]
+        self.icono           = datos["icono"]
+        self.zona_origen     = datos["zona_origen"]
 
         # Atributos de compatibilidad con la interfaz de Item (para la GUI)
-        self.efecto_positivo: dict = {}
-        self.efecto_negativo: dict = {}
-        self.es_consumible: bool = True   # Se consume al usarlo para evolucionar
-        self.es_captura: bool = False
-        self.es_fragmento: bool = True    # Marca especial para distinguir de Item
+        self.efecto_positivo = {}
+        self.efecto_negativo = {}
+        self.es_consumible   = True    # Se consume al usarlo para evolucionar
+        self.es_captura      = False
+        self.es_fragmento    = True    # Marca especial para distinguirlo de Item
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return f"FragmentoEvolucion('{self.nombre}', tipo='{self.tipo_criatura}')"
 
-    def __str__(self) -> str:
+    def __str__(self):
         return f"{self.icono} {self.nombre} — {self.descripcion}"

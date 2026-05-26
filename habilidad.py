@@ -2,27 +2,18 @@
 habilidad.py
 ============
 Define la clase Habilidad, que representa una acción que una criatura
-puede ejecutar en combate. Reemplaza el ataque genérico con acciones
-diferenciadas: ataques normales, ataques especiales, esquiva y efectos
-de estado.
+puede ejecutar en combate.
 
 Tipos de habilidad
 ------------------
-  "ataque"    — inflige daño directo al enemigo.
-  "especial"  — daño amplificado con ventaja de tipo (ignora parcialmente DEF).
-  "esquivar"  — aumenta evasión del usuario durante el turno (reduce daño recibido).
-  "soporte"   — restaura HP o MP del usuario.
-
-Cada habilidad tiene un coste de MP. Si la criatura no tiene MP suficiente
-la habilidad falla y se usa "Atacar" como fallback.
+  "ataque"   — inflige daño directo al enemigo.
+  "especial" — daño amplificado que ignora parte de la DEF del enemigo.
+  "esquivar" — el usuario entra en modo evasivo: los ataques que recibe
+               este turno tienen -50% de probabilidad de conectar.
+  "soporte"  — restaura HP del usuario.
 """
 
-from __future__ import annotations
 import random
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from criatura import Criatura
 
 
 class Habilidad:
@@ -30,72 +21,63 @@ class Habilidad:
     Representa una habilidad usable en combate.
 
     Atributos:
-        nombre (str): Nombre de la habilidad.
-        tipo (str): Categoría funcional — 'ataque' | 'especial' | 'esquivar' | 'soporte'.
-        costo_mp (int): MP consumido al usar la habilidad (0 para ataques básicos).
-        potencia (float): Multiplicador de daño sobre el ATK base.
+        nombre (str):        Nombre de la habilidad.
+        tipo (str):          Categoría: 'ataque', 'especial', 'esquivar' o 'soporte'.
+        costo_mp (int):      MP que consume al usarse (0 para el ataque básico).
+        potencia (float):    Multiplicador de daño sobre el ATK base.
         precision_mod (float): Modificador sobre la precisión base del usuario.
-        descripcion (str): Texto descriptivo para la GUI.
-        icono (str): Emoji representativo para la GUI.
+        descripcion (str):   Texto descriptivo para la GUI.
+        icono (str):         Emoji representativo para la GUI.
     """
 
     def __init__(
         self,
-        nombre: str,
-        tipo: str,
-        costo_mp: int,
-        potencia: float,
-        precision_mod: float = 1.0,
-        descripcion: str = "",
-        icono: str = "✦",
-    ) -> None:
+        nombre,
+        tipo,
+        costo_mp,
+        potencia,
+        precision_mod=1.0,
+        descripcion="",
+        icono="✦",
+    ):
         tipos_validos = {"ataque", "especial", "esquivar", "soporte"}
         if tipo not in tipos_validos:
-            raise ValueError(f"Tipo de habilidad '{tipo}' no válido. Use: {tipos_validos}")
+            raise ValueError(f"Tipo '{tipo}' no válido. Use: {tipos_validos}")
         if potencia < 0:
             raise ValueError("La potencia no puede ser negativa.")
         if costo_mp < 0:
             raise ValueError("El costo de MP no puede ser negativo.")
 
-        self.nombre: str = nombre
-        self.tipo: str = tipo
-        self.costo_mp: int = costo_mp
-        self.potencia: float = potencia
-        self.precision_mod: float = precision_mod
-        self.descripcion: str = descripcion
-        self.icono: str = icono
+        self.nombre        = nombre
+        self.tipo          = tipo
+        self.costo_mp      = costo_mp
+        self.potencia      = potencia
+        self.precision_mod = precision_mod
+        self.descripcion   = descripcion
+        self.icono         = icono
 
-    # ─────────────────────────────────────────
-    # EJECUCIÓN EN COMBATE
-    # ─────────────────────────────────────────
-
-    def puede_usarse(self, usuario: "Criatura") -> bool:
-        """Retorna True si el usuario tiene suficiente MP para usar esta habilidad."""
+    def puede_usarse(self, usuario):
+        """Retorna True si el usuario tiene suficiente MP para esta habilidad."""
         return usuario.mp >= self.costo_mp
 
-    def usar(
-        self,
-        usuario: "Criatura",
-        objetivo: "Criatura",
-        mod_clima: float = 1.0,
-    ) -> dict:
+    def usar(self, usuario, objetivo, mod_clima=1.0):
         """
-        Ejecuta la habilidad y retorna un reporte del resultado.
+        Ejecuta la habilidad y retorna un diccionario con el resultado.
 
-        Parámetros:
-            usuario   (Criatura): Criatura que usa la habilidad.
-            objetivo  (Criatura): Criatura objetivo (puede ser la misma para soporte).
-            mod_clima (float):    Multiplicador de clima aplicado al ATK del usuario.
-
-        Retorna:
-            dict con claves:
-                "conectó"   (bool)  — si la acción tuvo efecto.
-                "daño"      (int)   — daño infligido (0 si no aplica).
-                "curación"  (int)   — HP restaurado (0 si no aplica).
-                "evasión"   (bool)  — si el usuario entró en estado evasivo.
-                "mensaje"   (str)   — descripción del evento para el log.
+        Retorna un dict con:
+            "conecto"  (bool) — si la acción tuvo efecto.
+            "dano"     (int)  — daño infligido (0 si no aplica).
+            "curacion" (int)  — HP restaurado (0 si no aplica).
+            "evasion"  (bool) — si el usuario entró en estado evasivo.
+            "mensaje"  (str)  — descripción del evento para el log.
         """
-        resultado = {"conectó": False, "daño": 0, "curación": 0, "evasión": False, "mensaje": ""}
+        resultado = {
+            "conecto":  False,
+            "dano":     0,
+            "curacion": 0,
+            "evasion":  False,
+            "mensaje":  "",
+        }
 
         # Verificar MP
         if not self.puede_usarse(usuario):
@@ -108,7 +90,7 @@ class Habilidad:
         # Consumir MP
         usuario.mp = max(0, usuario.mp - self.costo_mp)
 
-        # ── ATAQUE NORMAL ──────────────────────────────────────────────────
+        # ── ATAQUE NORMAL ─────────────────────────────────────────────────
         if self.tipo == "ataque":
             precision_efectiva = min(1.0, usuario.precision * self.precision_mod)
             if random.random() > precision_efectiva:
@@ -119,11 +101,12 @@ class Habilidad:
                 int(usuario.atk * self.potencia * 0.85),
                 int(usuario.atk * self.potencia * 1.15),
             )
-            mult_tipo = usuario.tipo.calcular_multiplicador(objetivo.tipo)
+            mult_tipo  = usuario.tipo.calcular_multiplicador(objetivo.tipo)
             dano_final = max(1, int(dano_base * mult_tipo * mod_clima) - objetivo.defensa // 2)
 
             objetivo.hp = max(0, objetivo.hp - dano_final)
-            resultado.update({"conectó": True, "daño": dano_final})
+            resultado["conecto"] = True
+            resultado["dano"]    = dano_final
             resultado["mensaje"] = (
                 f"{usuario.nombre} usó {self.nombre} -> {dano_final} de daño "
                 f"a {objetivo.nombre} (tipo x{mult_tipo:.2f})."
@@ -140,12 +123,13 @@ class Habilidad:
                 int(usuario.atk * self.potencia * 0.90),
                 int(usuario.atk * self.potencia * 1.10),
             )
-            mult_tipo = usuario.tipo.calcular_multiplicador(objetivo.tipo)
-            # Especiales penetran un 70% de la DEF del objetivo
+            mult_tipo  = usuario.tipo.calcular_multiplicador(objetivo.tipo)
+            # Los ataques especiales penetran el 70% de la DEF del objetivo
             dano_final = max(1, int(dano_base * mult_tipo * mod_clima) - int(objetivo.defensa * 0.30))
 
             objetivo.hp = max(0, objetivo.hp - dano_final)
-            resultado.update({"conectó": True, "daño": dano_final})
+            resultado["conecto"] = True
+            resultado["dano"]    = dano_final
             resultado["mensaje"] = (
                 f"{usuario.nombre} usó {self.nombre} [ESPECIAL] -> {dano_final} de daño "
                 f"a {objetivo.nombre} (ignora parte de la DEF)."
@@ -153,10 +137,10 @@ class Habilidad:
 
         # ── ESQUIVAR ───────────────────────────────────────────────────────
         elif self.tipo == "esquivar":
-            # Marca al usuario en modo evasivo este turno
-            usuario._evasivo = True
-            resultado.update({"conectó": True, "evasión": True})
-            resultado["mensaje"] = (
+            usuario.evasivo      = True
+            resultado["conecto"]  = True
+            resultado["evasion"]  = True
+            resultado["mensaje"]  = (
                 f"💨 {usuario.nombre} usó {self.nombre}: "
                 f"los ataques que reciba este turno tienen -50% de probabilidad de conectar."
             )
@@ -165,25 +149,22 @@ class Habilidad:
         elif self.tipo == "soporte":
             curacion = int(usuario.hp_max * self.potencia)
             usuario.hp = min(usuario.hp_max, usuario.hp + curacion)
-            resultado.update({"conectó": True, "curación": curacion})
-            resultado["mensaje"] = (
+            resultado["conecto"]  = True
+            resultado["curacion"] = curacion
+            resultado["mensaje"]  = (
                 f"💚 {usuario.nombre} usó {self.nombre}: recuperó {curacion} HP. "
                 f"({usuario.hp}/{usuario.hp_max})"
             )
 
         return resultado
 
-    # ─────────────────────────────────────────
-    # REPRESENTACIÓN
-    # ─────────────────────────────────────────
-
-    def __repr__(self) -> str:
+    def __repr__(self):
         return (
             f"Habilidad(nombre='{self.nombre}', tipo='{self.tipo}', "
             f"costo_mp={self.costo_mp}, potencia={self.potencia})"
         )
 
-    def __str__(self) -> str:
+    def __str__(self):
         return (
             f"{self.icono} {self.nombre} [{self.tipo.upper()}] "
             f"MP:{self.costo_mp} | POT:{self.potencia:.1f}x — {self.descripcion}"
@@ -193,194 +174,101 @@ class Habilidad:
 # ─────────────────────────────────────────
 # CATÁLOGO DE HABILIDADES
 # ─────────────────────────────────────────
-# Estructura: nombre → Habilidad instanciada.
-# Se importa desde criatura.py y game_state.py para asignar habilidades
-# a criaturas en el catálogo y durante la evolución.
+# Diccionario nombre -> objeto Habilidad.
+# Se importa desde criatura.py y game_state.py para asignar habilidades.
 
-CATALOGO_HABILIDADES: dict[str, Habilidad] = {
-    # ── Básicas (todas las criaturas en forma base) ──────────────────────
+CATALOGO_HABILIDADES = {
+    # Básica (todas las criaturas en forma base)
     "Atacar": Habilidad(
-        nombre="Atacar",
-        tipo="ataque",
-        costo_mp=0,
-        potencia=1.0,
-        descripcion="Ataque físico básico.",
-        icono="⚔",
+        nombre="Atacar", tipo="ataque", costo_mp=0, potencia=1.0,
+        descripcion="Ataque físico básico.", icono="⚔",
     ),
 
-    # ── Ignis (Fuego) ────────────────────────────────────────────────────
+    # Ignis (Fuego)
     "Llamarada": Habilidad(
-        nombre="Llamarada",
-        tipo="ataque",
-        costo_mp=10,
-        potencia=1.4,
-        precision_mod=0.95,
-        descripcion="Ataque de fuego de mediana potencia.",
-        icono="🔥",
+        nombre="Llamarada", tipo="ataque", costo_mp=10, potencia=1.4,
+        precision_mod=0.95, descripcion="Ataque de fuego de mediana potencia.", icono="🔥",
     ),
     "Colmillo Ígneo": Habilidad(
-        nombre="Colmillo Ígneo",
-        tipo="especial",
-        costo_mp=20,
-        potencia=1.8,
-        precision_mod=0.88,
-        descripcion="Mordida envuelta en llamas. Ignora parte de la defensa.",
-        icono="🔥",
+        nombre="Colmillo Ígneo", tipo="especial", costo_mp=20, potencia=1.8,
+        precision_mod=0.88, descripcion="Mordida envuelta en llamas. Ignora parte de la defensa.", icono="🔥",
     ),
     "Erupción Solar": Habilidad(
-        nombre="Erupción Solar",
-        tipo="especial",
-        costo_mp=35,
-        potencia=2.6,
-        precision_mod=0.80,
-        descripcion="Explosión de plasma incandescente. Solo disponible en forma Magna.",
-        icono="☀",
+        nombre="Erupción Solar", tipo="especial", costo_mp=35, potencia=2.6,
+        precision_mod=0.80, descripcion="Explosión de plasma incandescente. Solo en forma Magna.", icono="☀",
     ),
 
-    # ── Torrente (Agua) ──────────────────────────────────────────────────
+    # Torrente (Agua)
     "Squirt de Agua": Habilidad(
-        nombre="Squirt de Agua",
-        tipo="ataque",
-        costo_mp=10,
-        potencia=1.4,
-        precision_mod=0.95,
-        descripcion="Disparo de agua a presión.",
-        icono="💧",
+        nombre="Squirt de Agua", tipo="ataque", costo_mp=10, potencia=1.4,
+        precision_mod=0.95, descripcion="Disparo de agua a presión.", icono="💧",
     ),
     "Vórtice": Habilidad(
-        nombre="Vórtice",
-        tipo="especial",
-        costo_mp=22,
-        potencia=1.9,
-        precision_mod=0.85,
-        descripcion="Torbellino de agua que arrastra al objetivo. Penetra defensa.",
-        icono="🌊",
+        nombre="Vórtice", tipo="especial", costo_mp=22, potencia=1.9,
+        precision_mod=0.85, descripcion="Torbellino de agua que arrastra al objetivo. Penetra defensa.", icono="🌊",
     ),
     "Marea Abismal": Habilidad(
-        nombre="Marea Abismal",
-        tipo="especial",
-        costo_mp=38,
-        potencia=2.7,
-        precision_mod=0.78,
-        descripcion="Oleada colosal desde las profundidades. Solo en forma Magna.",
-        icono="🌊",
+        nombre="Marea Abismal", tipo="especial", costo_mp=38, potencia=2.7,
+        precision_mod=0.78, descripcion="Oleada colosal desde las profundidades. Solo en forma Magna.", icono="🌊",
     ),
 
-    # ── Rocafer (Tierra) ────────────────────────────────────────────────
+    # Rocafer (Tierra)
     "Pedrada": Habilidad(
-        nombre="Pedrada",
-        tipo="ataque",
-        costo_mp=10,
-        potencia=1.3,
-        precision_mod=0.98,
-        descripcion="Lanza una roca sólida. Alta precisión.",
-        icono="🪨",
+        nombre="Pedrada", tipo="ataque", costo_mp=10, potencia=1.3,
+        precision_mod=0.98, descripcion="Lanza una roca sólida. Alta precisión.", icono="🪨",
     ),
     "Terremoto Menor": Habilidad(
-        nombre="Terremoto Menor",
-        tipo="especial",
-        costo_mp=20,
-        potencia=1.7,
-        precision_mod=0.90,
-        descripcion="Sacudida sísmica localizada. Penetra la defensa.",
-        icono="🪨",
+        nombre="Terremoto Menor", tipo="especial", costo_mp=20, potencia=1.7,
+        precision_mod=0.90, descripcion="Sacudida sísmica localizada. Penetra la defensa.", icono="🪨",
     ),
     "Colapso Tectónico": Habilidad(
-        nombre="Colapso Tectónico",
-        tipo="especial",
-        costo_mp=40,
-        potencia=2.5,
-        precision_mod=0.82,
-        descripcion="El suelo se rompe bajo el objetivo. Solo en forma Magna.",
-        icono="⛰",
+        nombre="Colapso Tectónico", tipo="especial", costo_mp=40, potencia=2.5,
+        precision_mod=0.82, descripcion="El suelo se rompe bajo el objetivo. Solo en forma Magna.", icono="⛰",
     ),
 
-    # ── Habilidades de esquiva y soporte (universales) ───────────────────
+    # Glacius (Hielo)
     "Lanza de Hielo": Habilidad(
-        nombre="Lanza de Hielo",
-        tipo="ataque",
-        costo_mp=10,
-        potencia=1.35,
-        precision_mod=0.96,
-        descripcion="Proyectil helado de buena precision.",
-        icono="*",
+        nombre="Lanza de Hielo", tipo="ataque", costo_mp=10, potencia=1.35,
+        precision_mod=0.96, descripcion="Proyectil helado de buena precisión.", icono="❄️",
     ),
     "Ventisca": Habilidad(
-        nombre="Ventisca",
-        tipo="especial",
-        costo_mp=22,
-        potencia=1.85,
-        precision_mod=0.86,
-        descripcion="Rafaga glacial que penetra parte de la defensa.",
-        icono="*",
+        nombre="Ventisca", tipo="especial", costo_mp=22, potencia=1.85,
+        precision_mod=0.86, descripcion="Ráfaga glacial que penetra parte de la defensa.", icono="❄️",
     ),
     "Cero Absoluto": Habilidad(
-        nombre="Cero Absoluto",
-        tipo="especial",
-        costo_mp=40,
-        potencia=2.65,
-        precision_mod=0.78,
-        descripcion="Congelacion extrema. Solo disponible en forma Magna.",
-        icono="*",
-    ),
-    "Chispa": Habilidad(
-        nombre="Chispa",
-        tipo="ataque",
-        costo_mp=10,
-        potencia=1.35,
-        precision_mod=0.97,
-        descripcion="Descarga electrica rapida.",
-        icono="⚡",
-    ),
-    "Rayo Cruzado": Habilidad(
-        nombre="Rayo Cruzado",
-        tipo="especial",
-        costo_mp=23,
-        potencia=1.9,
-        precision_mod=0.84,
-        descripcion="Impacto electrico concentrado que ignora parte de la defensa.",
-        icono="⚡",
-    ),
-    "Tormenta Ionica": Habilidad(
-        nombre="Tormenta Ionica",
-        tipo="especial",
-        costo_mp=42,
-        potencia=2.75,
-        precision_mod=0.76,
-        descripcion="Campo electrico devastador. Solo disponible en forma Magna.",
-        icono="⚡",
+        nombre="Cero Absoluto", tipo="especial", costo_mp=40, potencia=2.65,
+        precision_mod=0.78, descripcion="Congelación extrema. Solo en forma Magna.", icono="❄️",
     ),
 
+    # Voltex (Rayo)
+    "Chispa": Habilidad(
+        nombre="Chispa", tipo="ataque", costo_mp=10, potencia=1.35,
+        precision_mod=0.97, descripcion="Descarga eléctrica rápida.", icono="⚡",
+    ),
+    "Rayo Cruzado": Habilidad(
+        nombre="Rayo Cruzado", tipo="especial", costo_mp=23, potencia=1.9,
+        precision_mod=0.84, descripcion="Impacto eléctrico concentrado que ignora parte de la defensa.", icono="⚡",
+    ),
+    "Tormenta Ionica": Habilidad(
+        nombre="Tormenta Ionica", tipo="especial", costo_mp=42, potencia=2.75,
+        precision_mod=0.76, descripcion="Campo eléctrico devastador. Solo en forma Magna.", icono="⚡",
+    ),
+
+    # Esquiva y soporte (universales)
     "Paso Sombra": Habilidad(
-        nombre="Paso Sombra",
-        tipo="esquivar",
-        costo_mp=15,
-        potencia=0.0,
-        descripcion="Se funde con las sombras. Los ataques este turno tienen -50% de acierto.",
-        icono="💨",
+        nombre="Paso Sombra", tipo="esquivar", costo_mp=15, potencia=0.0,
+        descripcion="Se funde con las sombras. Los ataques este turno tienen -50% de acierto.", icono="💨",
     ),
     "Aura de Tormenta": Habilidad(
-        nombre="Aura de Tormenta",
-        tipo="esquivar",
-        costo_mp=20,
-        potencia=0.0,
-        descripcion="Genera un campo eléctrico disuasorio. Desvía ataques este turno.",
-        icono="⚡",
+        nombre="Aura de Tormenta", tipo="esquivar", costo_mp=20, potencia=0.0,
+        descripcion="Genera un campo eléctrico disuasorio. Desvía ataques este turno.", icono="⚡",
     ),
     "Brisa Curativa": Habilidad(
-        nombre="Brisa Curativa",
-        tipo="soporte",
-        costo_mp=18,
-        potencia=0.25,
-        descripcion="Recupera el 25% del HP máximo.",
-        icono="💚",
+        nombre="Brisa Curativa", tipo="soporte", costo_mp=18, potencia=0.25,
+        descripcion="Recupera el 25% del HP máximo.", icono="💚",
     ),
     "Pulso Vital": Habilidad(
-        nombre="Pulso Vital",
-        tipo="soporte",
-        costo_mp=30,
-        potencia=0.40,
-        descripcion="Regeneración profunda. Recupera el 40% del HP máximo.",
-        icono="💚",
+        nombre="Pulso Vital", tipo="soporte", costo_mp=30, potencia=0.40,
+        descripcion="Regeneración profunda. Recupera el 40% del HP máximo.", icono="💚",
     ),
 }

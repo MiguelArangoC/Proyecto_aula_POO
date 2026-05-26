@@ -325,7 +325,8 @@ class SideNav(tk.Frame):
         self.gold_label.pack(pady=(0, 12))
 
     def _save_game(self):
-        combat_scr = self.master._screens.get("combat") if hasattr(self.master, "_screens") else None
+        main_scr = self.app._screens.get("main")
+        combat_scr = main_scr._screens.get("combat") if main_scr and hasattr(main_scr, "_screens") else None
         if combat_scr and combat_scr.combat_active:
             messagebox.showwarning(
                 "Guardado deshabilitado",
@@ -1340,9 +1341,11 @@ class InventoryScreen(tk.Frame):
                 messagebox.showwarning("Sin criaturas", "No tienes criaturas en el equipo.")
                 return
             try:
-                jugador.consumir_item(nombre_backend)
+                item_obj = jugador.obtener_item(nombre_backend)
                 hp_antes = criatura_backend.hp
-                criatura_backend.hp = min(criatura_backend.hp + 30, criatura_backend.hp_max)
+                item_obj.modificar_estadistica(criatura_backend, revertir=False)
+                criatura_backend.hp = min(criatura_backend.hp, criatura_backend.hp_max)
+                jugador.consumir_item(nombre_backend)
                 curado = criatura_backend.hp - hp_antes
                 self.app.state.sync()
                 messagebox.showinfo(
@@ -2181,6 +2184,8 @@ class MainScreen(tk.Frame):
 
     def show(self, key):
         if self._active_key == key:
+            if hasattr(self._screens[key], "refresh"):
+                self._screens[key].refresh()
             return
         combat_scr = self._screens.get("combat")
         if combat_scr and combat_scr.combat_active:
