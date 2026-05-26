@@ -99,7 +99,6 @@ El código está estructurado en los siguientes módulos y archivos:
 ## 🧬 Diagrama de Clases UML
 
 ```mermaid
-![Diagrama UML](docs/diagrama_uml.png)
 classDiagram
     class Juego {
         +Jugador jugador
