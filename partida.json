@@ -1,77 +1,113 @@
 {
-  "nombre": "Oelo",
-  "posicion": "Volcán",
-  "oro": 200,
-  "criatura_combate": "Ignis",
+  "nombre": "Milo",
+  "posicion": "Lago",
+  "oro": 20,
+  "criatura_combate": "Glacius Boreal",
   "equipo": [
     {
       "nombre": "Ignis",
       "tipo": "Fuego",
-      "hp": 5,
-      "hp_max": 110,
-      "mp": 43,
-      "mp_max": 43,
-      "atk": 54,
+      "hp": 45,
+      "hp_max": 100,
+      "mp": 40,
+      "mp_max": 40,
+      "atk": 50,
       "defensa": 12,
       "velocidad": 14,
       "precision": 0.9,
-      "nivel": 2,
-      "experiencia": 140,
-      "xp_siguiente": 150,
+      "nivel": 1,
+      "experiencia": 60,
+      "xp_siguiente": 100,
       "forma": 0,
       "habilidades": [
         "Atacar"
+      ],
+      "item_equipado": null
+    },
+    {
+      "nombre": "Glacius Boreal",
+      "tipo": "Hielo",
+      "hp": 0,
+      "hp_max": 126,
+      "mp": 53,
+      "mp_max": 62,
+      "atk": 63,
+      "defensa": 14,
+      "velocidad": 14,
+      "precision": 0.9,
+      "nivel": 1,
+      "experiencia": 0,
+      "xp_siguiente": 100,
+      "forma": 1,
+      "habilidades": [
+        "Atacar",
+        "Lanza de Hielo",
+        "Paso Sombra"
+      ],
+      "item_equipado": null
+    },
+    {
+      "nombre": "Rocafer",
+      "tipo": "Tierra",
+      "hp": 39,
+      "hp_max": 130,
+      "mp": 40,
+      "mp_max": 40,
+      "atk": 40,
+      "defensa": 18,
+      "velocidad": 8,
+      "precision": 0.9,
+      "nivel": 1,
+      "experiencia": 0,
+      "xp_siguiente": 100,
+      "forma": 0,
+      "habilidades": [
+        "Atacar"
+      ],
+      "item_equipado": null
+    },
+    {
+      "nombre": "Magma Primordial",
+      "tipo": "Fuego",
+      "hp": 54,
+      "hp_max": 207,
+      "mp": 46,
+      "mp_max": 46,
+      "atk": 66,
+      "defensa": 37,
+      "velocidad": 6,
+      "precision": 0.9,
+      "nivel": 3,
+      "experiencia": 170,
+      "xp_siguiente": 225,
+      "forma": 0,
+      "habilidades": [
+        "Atacar",
+        "Oleada de Lava",
+        "Coraza Ígnea",
+        "Núcleo Fundido"
       ],
       "item_equipado": null
     }
   ],
   "inventario": [
     {
-      "nombre": "Poción",
-      "descripcion": "Restaura 30 HP a la criatura equipada.",
-      "efecto_positivo": {
-        "hp": 30
-      },
+      "nombre": "Fragmento de Trueno",
+      "descripcion": "Cristal eléctrico hallado en la Cumbre Nevada. Permite evolucionar a Voltex.",
+      "efecto_positivo": {},
       "efecto_negativo": {},
       "es_consumible": true,
       "es_captura": false,
-      "es_fragmento": false
+      "es_fragmento": true
     },
     {
-      "nombre": "Trampa Básica",
-      "descripcion": "Permite intentar capturar una criatura salvaje.",
+      "nombre": "Fragmento de Marea",
+      "descripcion": "Gema marina hallada en el Lago. Permite evolucionar a Torrente.",
       "efecto_positivo": {},
       "efecto_negativo": {},
       "es_consumible": true,
-      "es_captura": true,
-      "es_fragmento": false
-    },
-    {
-      "nombre": "Trampa Básica",
-      "descripcion": "Permite intentar capturar una criatura salvaje.",
-      "efecto_positivo": {},
-      "efecto_negativo": {},
-      "es_consumible": true,
-      "es_captura": true,
-      "es_fragmento": false
-    },
-    {
-      "nombre": "Trampa Básica",
-      "descripcion": "Permite intentar capturar una criatura salvaje.",
-      "efecto_positivo": {},
-      "efecto_negativo": {},
-      "es_consumible": true,
-      "es_captura": true,
-      "es_fragmento": false
-    },
-    {
-      "nombre": "Trampa Básica",
-      "descripcion": "Permite intentar capturar una criatura salvaje.",
-      "efecto_positivo": {},
-      "efecto_negativo": {},
-      "es_consumible": true,
-      "es_captura": true,
-      "es_fragmento": false
+      "es_captura": false,
+      "es_fragmento": true
     }
   ]
 }
