@@ -1,0 +1,333 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="POO-Criaturas" id="poo-v4">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="2400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- JUEGO  col=2  fila=1  x=1100 y=60 -->
+        <mxCell id="j1" value="Juego" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#9673c6;fillColor=#6d3cc1;fontColor=#ffffff;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;">
+          <mxGeometry x="1100" y="60" width="280" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="j2" value="+Jugador jugador&#xa;+Mapa mapa&#xa;+Batalla batalla_activa&#xa;+Criatura criatura_encontrada" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#9673c6;fillColor=#f9f0ff;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="1100" y="96" width="280" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="j3" value="+crear_jugador(nombre, criatura_inicial)&#xa;+explorar() / +mover(direccion)&#xa;+iniciar_batalla()&#xa;+ejecutar_turno(usar_item, nombre_habilidad)&#xa;+evolucionar_criatura(nombre)&#xa;+guardar_partida() / +cargar_partida()" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#9673c6;fillColor=#f9f0ff;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="1100" y="168" width="280" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="j0" value="" parent="1" vertex="1"
+          style="points=[[0,0],[1,0],[1,1],[0,1]];shape=table;startSize=0;container=0;collapsible=0;strokeColor=#9673c6;opacity=0;">
+          <mxGeometry x="1100" y="60" width="280" height="216" as="geometry"/>
+        </mxCell>
+
+        <!-- JUGADOR  col=1  fila=2  x=200 y=420 -->
+        <mxCell id="ju1" value="Jugador" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#00b39f;fillColor=#007a66;fontColor=#ffffff;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;">
+          <mxGeometry x="200" y="420" width="280" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="ju2" value="+str nombre&#xa;+int oro&#xa;+str posicion&#xa;+list equipo&#xa;+list inventario&#xa;+str criatura_combate" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#00b39f;fillColor=#e6fff8;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="200" y="456" width="280" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="ju3" value="+agregar_criatura(criatura)&#xa;+remover_criatura(nombre)&#xa;+equipar_item(criatura, nombre_item)&#xa;+capturar_criatura(criatura, item)&#xa;+criatura_activa() → Criatura&#xa;+guardar(ruta)&#xa;[cargar_jugador(ruta) — funcion suelta]" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#00b39f;fillColor=#e6fff8;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="200" y="564" width="280" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="ju0" value="" parent="1" vertex="1"
+          style="points=[[0,0],[1,0],[1,1],[0,1]];shape=table;startSize=0;container=0;collapsible=0;strokeColor=#00b39f;opacity=0;">
+          <mxGeometry x="200" y="420" width="280" height="264" as="geometry"/>
+        </mxCell>
+
+        <!-- CRIATURA  col=2  fila=2  x=1100 y=420 -->
+        <mxCell id="cr1" value="Criatura" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#d05a20;fillColor=#c44000;fontColor=#ffffff;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;">
+          <mxGeometry x="1100" y="420" width="280" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr2" value="+str nombre&#xa;+str nombre_base&#xa;+Tipo tipo&#xa;+int hp / hp_max&#xa;+int mp / mp_max&#xa;+int atk / defensa&#xa;+int velocidad&#xa;+float precision&#xa;+int nivel / experiencia / xp_siguiente&#xa;+int forma  (0=base, 1=evo, 2=magna)&#xa;+list habilidades&#xa;+Item item_equipado&#xa;+bool evasivo" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#d05a20;fillColor=#fff2ee;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="1100" y="456" width="280" height="228" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr3" value="+esta_debilitada() → bool&#xa;+recuperar_mp_turno()&#xa;+limpiar_estado_turno()&#xa;+agregar_habilidad(habilidad)&#xa;+obtener_habilidad(nombre) → Habilidad&#xa;+puede_evolucionar(fragmento)&#xa;+evolucionar(fragmento) → str&#xa;+ganar_experiencia(xp) → bool&#xa;+subir_nivel()" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#d05a20;fillColor=#fff2ee;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="1100" y="684" width="280" height="156" as="geometry"/>
+        </mxCell>
+        <mxCell id="cr0" value="" parent="1" vertex="1"
+          style="points=[[0,0],[1,0],[1,1],[0,1]];shape=table;startSize=0;container=0;collapsible=0;strokeColor=#d05a20;opacity=0;">
+          <mxGeometry x="1100" y="420" width="280" height="420" as="geometry"/>
+        </mxCell>
+
+        <!-- MAPA  col=3  fila=2  x=2000 y=420 -->
+        <mxCell id="mp1" value="Mapa" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#00b39f;fillColor=#007a66;fontColor=#ffffff;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;">
+          <mxGeometry x="2000" y="420" width="280" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="mp2" value="+dict zonas" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#00b39f;fillColor=#e6fff8;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="2000" y="456" width="280" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="mp3" value="+agregar_zona(zona)&#xa;+obtener_zona(nombre) → Zona&#xa;+zonas_adyacentes(nombre) → dict&#xa;[crear_mapa_default() — funcion suelta]" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#00b39f;fillColor=#e6fff8;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="2000" y="492" width="280" height="84" as="geometry"/>
+        </mxCell>
+        <mxCell id="mp0" value="" parent="1" vertex="1"
+          style="points=[[0,0],[1,0],[1,1],[0,1]];shape=table;startSize=0;container=0;collapsible=0;strokeColor=#00b39f;opacity=0;">
+          <mxGeometry x="2000" y="420" width="280" height="156" as="geometry"/>
+        </mxCell>
+
+        <!-- ZONA  col=3  fila=3  x=2000 y=660 -->
+        <mxCell id="zo1" value="Zona" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#00b39f;fillColor=#007a66;fontColor=#ffffff;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;">
+          <mxGeometry x="2000" y="660" width="280" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="zo2" value="+str nombre&#xa;+str clima_base&#xa;+list criaturas_salvajes&#xa;+dict conexiones" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#00b39f;fillColor=#e6fff8;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="2000" y="696" width="280" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="zo3" value="+agregar_conexion(direccion, zona)&#xa;+obtener_criatura_aleatoria() → str" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#00b39f;fillColor=#e6fff8;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="2000" y="768" width="280" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="zo0" value="" parent="1" vertex="1"
+          style="points=[[0,0],[1,0],[1,1],[0,1]];shape=table;startSize=0;container=0;collapsible=0;strokeColor=#00b39f;opacity=0;">
+          <mxGeometry x="2000" y="660" width="280" height="156" as="geometry"/>
+        </mxCell>
+
+        <!-- TIPO  col=1  fila=1  x=200 y=60 -->
+        <mxCell id="ti1" value="Tipo" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#d99500;fillColor=#bf7d00;fontColor=#ffffff;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;">
+          <mxGeometry x="200" y="60" width="280" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="ti2" value="+str nombre&#xa;  (6 tipos: Fuego / Agua / Tierra / Rayo / Hielo / Normal)" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#d99500;fillColor=#fff8e6;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="200" y="96" width="280" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="ti3" value="+calcular_multiplicador(tipo_defensor) → float&#xa;  (1.5 ventaja / 1.0 neutro / 0.67 desventaja)" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#d99500;fillColor=#fff8e6;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="200" y="144" width="280" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="ti0" value="" parent="1" vertex="1"
+          style="points=[[0,0],[1,0],[1,1],[0,1]];shape=table;startSize=0;container=0;collapsible=0;strokeColor=#d99500;opacity=0;">
+          <mxGeometry x="200" y="60" width="280" height="132" as="geometry"/>
+        </mxCell>
+
+        <!-- HABILIDAD  col=1  fila=3  x=200 y=780 -->
+        <mxCell id="ha1" value="Habilidad" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#d99500;fillColor=#bf7d00;fontColor=#ffffff;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;">
+          <mxGeometry x="200" y="780" width="280" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="ha2" value="+str nombre&#xa;+str tipo  (ataque / especial / esquivar / soporte)&#xa;+int costo_mp&#xa;+float potencia&#xa;+float precision_mod&#xa;+str descripcion / icono" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#d99500;fillColor=#fff8e6;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="200" y="816" width="280" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="ha3" value="+puede_usarse(usuario) → bool&#xa;+usar(usuario, objetivo, mod_clima) → dict" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#d99500;fillColor=#fff8e6;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="200" y="924" width="280" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="ha0" value="" parent="1" vertex="1"
+          style="points=[[0,0],[1,0],[1,1],[0,1]];shape=table;startSize=0;container=0;collapsible=0;strokeColor=#d99500;opacity=0;">
+          <mxGeometry x="200" y="780" width="280" height="192" as="geometry"/>
+        </mxCell>
+
+        <!-- ITEM  col=1  fila=4  x=200 y=1080 -->
+        <mxCell id="it1" value="Item" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#d99500;fillColor=#bf7d00;fontColor=#ffffff;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;">
+          <mxGeometry x="200" y="1080" width="280" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="it2" value="+str nombre / descripcion&#xa;+dict efecto_positivo&#xa;+dict efecto_negativo&#xa;+bool es_consumible&#xa;+bool es_captura" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#d99500;fillColor=#fff8e6;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="200" y="1116" width="280" height="96" as="geometry"/>
+        </mxCell>
+        <mxCell id="it3" value="+modificar_estadistica(criatura, revertir)&#xa;  (if/elif por atributo)" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#d99500;fillColor=#fff8e6;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="200" y="1212" width="280" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="it0" value="" parent="1" vertex="1"
+          style="points=[[0,0],[1,0],[1,1],[0,1]];shape=table;startSize=0;container=0;collapsible=0;strokeColor=#d99500;opacity=0;">
+          <mxGeometry x="200" y="1080" width="280" height="180" as="geometry"/>
+        </mxCell>
+
+        <!-- FRAGMENTO  col=2  fila=4  x=1100 y=1080 -->
+        <mxCell id="fr1" value="FragmentoEvolucion" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#d99500;fillColor=#bf7d00;fontColor=#ffffff;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;">
+          <mxGeometry x="1100" y="1080" width="280" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="fr2" value="+str nombre / descripcion&#xa;+str tipo_criatura&#xa;+str zona_origen&#xa;+bool es_fragmento = True&#xa;+bool es_consumible = True" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#d99500;fillColor=#fff8e6;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="1100" y="1116" width="280" height="96" as="geometry"/>
+        </mxCell>
+        <mxCell id="fr0" value="" parent="1" vertex="1"
+          style="points=[[0,0],[1,0],[1,1],[0,1]];shape=table;startSize=0;container=0;collapsible=0;strokeColor=#d99500;opacity=0;">
+          <mxGeometry x="1100" y="1080" width="280" height="132" as="geometry"/>
+        </mxCell>
+
+        <!-- BATALLA  col=2  fila=3  x=1100 y=960 -->
+        <mxCell id="ba1" value="Batalla" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#1878c0;fillColor=#1060a0;fontColor=#ffffff;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;">
+          <mxGeometry x="1100" y="960" width="280" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="ba2" value="+Jugador jugador&#xa;+Criatura enemigo&#xa;+CondicionClimatica condicion_climatica&#xa;+int turno&#xa;+EstadoBatalla estado&#xa;+list log&#xa;+int XP_POR_VICTORIA = 50" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#1878c0;fillColor=#e8f4ff;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="1100" y="996" width="280" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="ba3" value="+ejecutar_turno(usar_item, nombre_item, nombre_habilidad)&#xa;+retirarse() → EstadoBatalla&#xa;+resumen() → str" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#1878c0;fillColor=#e8f4ff;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="1100" y="1116" width="280" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="ba0" value="" parent="1" vertex="1"
+          style="points=[[0,0],[1,0],[1,1],[0,1]];shape=table;startSize=0;container=0;collapsible=0;strokeColor=#1878c0;opacity=0;">
+          <mxGeometry x="1100" y="960" width="280" height="216" as="geometry"/>
+        </mxCell>
+
+        <!-- CONDICION CLIMATICA  col=3  fila=3  x=2000 y=960 -->
+        <mxCell id="cc1" value="CondicionClimatica" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#1878c0;fillColor=#1060a0;fontColor=#ffffff;align=center;verticalAlign=middle;fontSize=13;fontStyle=1;">
+          <mxGeometry x="2000" y="960" width="280" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="cc2" value="+str nombre&#xa;+list beneficia&#xa;+list perjudica&#xa;+dict dano_turno&#xa;  (Soleado / Lluvioso / Tormentoso&#xa;   Caluroso / Nevado)" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#1878c0;fillColor=#e8f4ff;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="2000" y="996" width="280" height="108" as="geometry"/>
+        </mxCell>
+        <mxCell id="cc3" value="+modificador_ataque(tipo) → float&#xa;  (x1.20 / x0.90 / x1.0)&#xa;+aplicar_dano_turno(criatura) → int&#xa;+descripcion() → str" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#1878c0;fillColor=#e8f4ff;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="2000" y="1104" width="280" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="cc0" value="" parent="1" vertex="1"
+          style="points=[[0,0],[1,0],[1,1],[0,1]];shape=table;startSize=0;container=0;collapsible=0;strokeColor=#1878c0;opacity=0;">
+          <mxGeometry x="2000" y="960" width="280" height="216" as="geometry"/>
+        </mxCell>
+
+        <!-- NOTA funciones sueltas  col=3  fila=1  x=2000 y=60 -->
+        <mxCell id="no1" value="Funciones sueltas" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#e6a118;fillColor=#f0a30a;fontColor=#000000;align=center;verticalAlign=middle;fontSize=12;fontStyle=3;">
+          <mxGeometry x="2000" y="60" width="280" height="36" as="geometry"/>
+        </mxCell>
+        <mxCell id="no2" value="cargar_jugador(ruta) → Jugador&#xa;  jugador.py — antes era Jugador.cargar()&#xa;&#xa;crear_mapa_default() → Mapa&#xa;  mapa.py — antes era Mapa.crear_mapa_default()" parent="1" vertex="1"
+          style="text;html=1;strokeColor=#e6a118;fillColor=#fffbe6;align=left;verticalAlign=top;spacingLeft=8;fontSize=11;">
+          <mxGeometry x="2000" y="96" width="280" height="96" as="geometry"/>
+        </mxCell>
+        <mxCell id="no0" value="" parent="1" vertex="1"
+          style="points=[[0,0],[1,0],[1,1],[0,1]];shape=table;startSize=0;container=0;collapsible=0;strokeColor=#e6a118;opacity=0;">
+          <mxGeometry x="2000" y="60" width="280" height="132" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══ EDGES ═══ -->
+
+        <!-- Juego -> Jugador -->
+        <mxCell id="e1" edge="1" source="j0" target="ju0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
+          value="contiene">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Juego -> Criatura -->
+        <mxCell id="e2" edge="1" source="j0" target="cr0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
+          value="criatura_encontrada 0..1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Juego -> Mapa -->
+        <mxCell id="e3" edge="1" source="j0" target="mp0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
+          value="contiene">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Juego -> Batalla -->
+        <mxCell id="e4" edge="1" source="j0" target="ba0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;dashed=1;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;"
+          value="orquesta 0..1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Mapa -> Zona -->
+        <mxCell id="e5" edge="1" source="mp0" target="zo0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
+          value="contiene 1..*">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Jugador -> Criatura -->
+        <mxCell id="e6" edge="1" source="ju0" target="cr0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;exitX=1;exitY=0.35;exitDx=0;exitDy=0;entryX=0;entryY=0.35;entryDx=0;entryDy=0;"
+          value="posee 1..*">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Jugador -> Item -->
+        <mxCell id="e7" edge="1" source="ju0" target="it0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
+          value="inventario 0..*">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Jugador -> Fragmento -->
+        <mxCell id="e8" edge="1" source="ju0" target="fr0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;dashed=1;exitX=1;exitY=0.8;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+          value="inventario 0..*">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Criatura -> Tipo -->
+        <mxCell id="e9" edge="1" source="cr0" target="ti0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;exitX=0;exitY=0.1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;"
+          value="tiene 1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Criatura -> Habilidad -->
+        <mxCell id="e10" edge="1" source="cr0" target="ha0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;exitX=0;exitY=0.6;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;"
+          value="lista 1..*">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Criatura -> Item -->
+        <mxCell id="e11" edge="1" source="cr0" target="it0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;dashed=1;exitX=0;exitY=0.85;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;"
+          value="equipa 0..1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Criatura -> Fragmento -->
+        <mxCell id="e12" edge="1" source="cr0" target="fr0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
+          value="evoluciona con">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Batalla -> Jugador -->
+        <mxCell id="e13" edge="1" source="ba0" target="ju0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;dashed=1;exitX=0;exitY=0.3;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;"
+          value="ref jugador">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Batalla -> Criatura -->
+        <mxCell id="e14" edge="1" source="ba0" target="cr0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;"
+          value="enemigo">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Batalla -> CondicionClimatica -->
+        <mxCell id="e15" edge="1" source="ba0" target="cc0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+          value="tiene clima">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Zona -> CondicionClimatica -->
+        <mxCell id="e16" edge="1" source="zo0" target="cc0" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;fontSize=10;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
+          value="clima base">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
