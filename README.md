@@ -240,7 +240,7 @@ classDiagram
 
 *Adicionalmente, se puede consultar el diagrama UML de relaciones:*
 
-<img width="1018" height="770" alt="Diagrama juego POO drawio" src="https://github.com/user-attachments/assets/567e70af-75f3-448e-9c16-dbcaff5372b6" />
+![Diagrama UML](docs/diagrama_uml.png)
 
 ---
 
